@@ -80,5 +80,15 @@
 <script src="js/recommend.js"></script>
 <script src="js/ui/render.js"></script>
 <script src="js/home.js"></script>
+<!-- 서비스 워커 — 야구장에서 네트워크가 안 터져도 한 번 본 화면과 구장 데이터가 열린다.
+     날씨는 캐시하지 않는다(오래된 날씨를 지금 날씨처럼 보여주지 않는다).
+     등록에 실패해도 앱은 평소대로 동작한다. -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js').catch(function () { /* 없어도 그만 */ });
+    });
+  }
+</script>
 </body>
 </html>
