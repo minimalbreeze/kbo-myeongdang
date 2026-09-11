@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="KBO 명당지도">
+  <!-- 브랜드 심볼: 위에서 내려다본 야구장 좌석 그릇. 붉은 띠 하나가 "명당"이다.
+       이 서비스의 핵심이 지도라서, 야구공이 아니라 지도를 심볼로 쓴다. -->
+  <rect width="512" height="512" rx="112" fill="#0b1526"/>
+
+  <g transform="translate(256 318) scale(0.85)">
+    <!-- 외야 잔디 (파울라인 ±45도 안쪽) -->
+    <path d="M0 0 L-159 -159 A225 225 0 0 1 159 -159 Z" fill="#2f7d4f" opacity="0.42"/>
+    <!-- 내야 흙 -->
+    <path d="M0 0 L-73 -73 A103 103 0 0 1 73 -73 Z" fill="#b98a5a" opacity="0.5"/>
+    <!-- 베이스 다이아몬드 -->
+    <path d="M0 0 L-53 -53 L0 -106 L53 -53 Z" fill="none" stroke="#fff" stroke-width="9" stroke-linejoin="round" opacity="0.85"/>
+
+    <!-- 좌석 그릇: 홈 뒤를 감싸는 띠 -->
+    <path d="M-186 0 A186 186 0 0 0 -110 150 L-80 109 A137 137 0 0 1 -137 0 Z" fill="#fff" opacity="0.5"/>
+    <path d="M186 0 A186 186 0 0 1 110 150 L80 109 A137 137 0 0 0 137 0 Z" fill="#fff" opacity="0.5"/>
+    <!-- 명당 한 자리 -->
+    <path d="M-110 150 A186 186 0 0 0 110 150 L80 109 A137 137 0 0 1 -80 109 Z" fill="#d81f34"/>
+  </g>
+</svg>

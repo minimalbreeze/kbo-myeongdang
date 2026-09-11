@@ -58,6 +58,42 @@ map/                  구장별 좌석 SVG (예정)
 공식 홈페이지(`tigers.co.kr`)는 개발 환경의 네트워크 정책으로 직접 확인하지
 못했습니다. 1차 출처 확인 후 채워야 합니다.
 
+## 배포
+
+GitHub Pages, `main` 브랜치 루트. 빌드 단계가 없습니다.
+
+```
+https://minimalbreeze.github.io/kbo-myeongdang/
+```
+
+`.nojekyll`을 두어 Jekyll 처리를 끕니다(순수 정적 파일이라 거칠 이유가 없습니다).
+
+**커스텀 도메인을 붙일 때** 바꿔야 하는 곳은 네 군데입니다.
+`js/config.js`의 `siteUrl`, `index.html`·`stadium.html`의 `canonical`/`og:url`,
+`robots.txt`의 Sitemap 줄, `sitemap.xml`의 `<loc>`.
+
+### 공유 미리보기 이미지
+
+카카오·X 같은 스크래퍼는 **이미지 URL을 키로** 캐시하고 오래 재확인하지 않습니다.
+`og-image.png`의 내용만 바꾸면 공유 카드는 몇 주 동안 옛 그림 그대로입니다.
+그림을 바꿀 때는 **파일명을 `og-image-v2.png`처럼 올리고**, 옛 파일은 남겨두세요
+(이미 퍼진 링크가 깨지지 않도록).
+
+### 아이콘
+
+`icon.svg`(파비콘/Android any), `icon-180.png`(iOS 홈 화면),
+`icon-192.png`/`icon-512.png`(Android any), `icon-512-maskable.png`(Android adaptive,
+안전 영역 확보) 다섯 가지를 함께 유지합니다. 아이콘을 바꿀 때는 전부 다시 만들어야 합니다.
+심볼은 **위에서 내려다본 좌석 그릇이고, 붉은 띠 하나가 "명당"** 입니다 — 이 서비스의
+핵심이 지도라서 야구공이 아니라 지도를 씁니다.
+
+### 검색 노출
+
+지금은 홈 한 장만 색인 대상입니다. `stadium.html`은 `noindex`입니다 —
+내용이 거의 비어 있는 페이지를 색인시키지 않기 위해서입니다.
+구장 데이터가 채워지면 `/stadium/gwangju/` 같은 **검색용 정적 페이지**를
+데이터에서 생성해 `sitemap.xml`에 함께 넣고, 그때 이 `noindex`를 걷어냅니다.
+
 ## 사용자 제보
 
 지도는 비어 있는 곳이 많고, 그 빈칸은 실제로 가본 사람만 채울 수 있습니다.
@@ -94,4 +130,5 @@ Cloudflare Worker 주소를 넣습니다 — **키를 클라이언트에 두지 
 - [ ] PHASE 4 — 인터랙티브 좌석지도 (SVG)
 - [x] 전체화면 좌석 지도 + 구역 시트 + 공유 딥링크
 - [x] 사용자 제보 창구 (외부 의존성 없이 동작)
+- [x] GitHub Pages 배포 · 공유 미리보기(OG) · 아이콘 · PWA 매니페스트
 - [ ] PHASE 5~ — 시야 · 추천 · 가격 · 예매 · 먹거리 · 굿즈 · 교통 · SEO
