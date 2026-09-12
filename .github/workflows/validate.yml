@@ -1,0 +1,25 @@
+name: 데이터 검사
+
+# 왜 CI에서 도는가
+#   이 서비스의 내용은 전부 data/*.json에 사람이 손으로 넣는다. 손으로 넣는 곳에서는
+#   반드시 실수가 나고, 앱은 잘못된 값을 만나도 조용히 빈 화면을 낸다.
+#   그래서 합치기 전에 여기서 막는다.
+
+on:
+  push:
+    branches: [main]
+    paths: ['data/**', 'scripts/validate-data.mjs', '.github/workflows/validate.yml']
+  pull_request:
+    paths: ['data/**', 'scripts/validate-data.mjs', '.github/workflows/validate.yml']
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: 데이터 검사
+        run: node scripts/validate-data.mjs

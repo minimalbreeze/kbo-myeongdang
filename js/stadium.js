@@ -258,6 +258,11 @@
 
     document.getElementById('sheet-close').addEventListener('click', closeSheet);
 
+    // 키보드로도 시트를 닫을 수 있어야 한다. 지금까지는 ✕ 버튼밖에 없었다.
+    document.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Escape' && sheet().dataset.open === 'true') closeSheet();
+    });
+
     // 시트 안 버튼은 위임으로 한 번만 연결한다.
     // (시트를 열 때마다 붙이면 리스너가 쌓여 공유가 여러 번 실행된다)
     body().addEventListener('click', (ev) => {

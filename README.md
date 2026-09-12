@@ -94,6 +94,71 @@ https://minimalbreeze.github.io/kbo-myeongdang/
 구장 데이터가 채워지면 `/stadium/gwangju/` 같은 **검색용 정적 페이지**를
 데이터에서 생성해 `sitemap.xml`에 함께 넣고, 그때 이 `noindex`를 걷어냅니다.
 
+## 데이터 채우기
+
+내용은 전부 `data/*.json`에 손으로 넣습니다. 코드는 건드리지 않습니다.
+
+### 넣기 전에
+
+값을 **모르면 넣지 마세요.** `null`로 두면 화면이 "정보 준비 중"이라고 말합니다.
+지어낸 값보다 빈 값이 낫습니다.
+
+### 넣은 뒤에는 반드시
+
+```bash
+node scripts/validate-data.mjs
+```
+
+없는 구장 id, 음수 가격, 어긋난 날짜 형식, 범위를 벗어난 점수, 같은 시각에 두 번
+잡힌 경기, 쉼표 빠진 JSON(몇 번째 줄인지도 알려줍니다) 같은 것을 잡습니다.
+CI에서도 같은 검사가 돌아서, 통과 못 하면 합칠 수 없습니다.
+
+### 자주 넣게 될 세 가지
+
+**경기** (`data/games.json`의 `games` 배열)
+
+```jsonc
+{
+  "date": "2026-09-15",     // YYYY-MM-DD
+  "time": "18:30",          // HH:MM
+  "stadiumId": "gwangju",
+  "homeName": "KIA 타이거즈",
+  "awayName": "LG 트윈스",
+  "status": "unknown"       // 기본값. 취소·지연은 공식 발표를 본 뒤에만 바꾼다
+}
+```
+
+`status`를 함부로 `canceled`로 바꾸지 마세요. 날씨가 나빠도 경기 진행 여부는
+공식 발표가 정합니다. 모르면 `unknown`이고, 화면이 KBO 공식 링크를 함께 띄웁니다.
+
+**좌석 평가** (`data/seats.json`의 해당 구장 `sections` 배열)
+
+```jsonc
+{
+  "section": "k8-120",
+  "seatName": "K8석 120블록",
+  "viewScore": 4, "gameScore": 3, "cheerScore": 5, "photoScore": 2,
+  "valueScore": 4, "sunScore": 3, "weatherScore": 3, "facilityScore": 3,
+  "description": "응원단상이 바로 앞이라 소리가 크다",
+  "price": "성인 15000",
+  "viewImage": null,        // 실제로 찍은 사진만. 없으면 null
+  "viewSource": null,       // 사진이 있으면 누가 찍었는지 반드시 함께
+  "updatedAt": "2026-09-15"
+}
+```
+
+점수는 **0~5, 높을수록 좋음**입니다. `sunScore` 5는 "햇빛 영향이 적다",
+`weatherScore` 5는 "비바람 영향이 적다"는 뜻입니다. 모르는 항목은 빼면 됩니다 —
+빠진 항목은 추천 계산에서 그냥 빠지지, 0점으로 세지 않습니다.
+
+**좌석 지도 구역** (`data/map/<구장id>.json`의 `zones`)
+
+각도는 0이 중견수 방향, 90이 1루측, 180이 홈 뒤, 270이 3루측입니다.
+`r0`이 안쪽, `r1`이 바깥쪽 반지름이고 `r0 < r1`이어야 합니다.
+공식 좌석도로 확인했으면 `"verified": true`로 올리세요 — 지도에서 선명해집니다.
+아직이면 `confidence`를 `corroborated`(여러 곳 일치) 또는 `unplaced`(위치 미확인)로
+두고, `why`에 왜 아직 확인 중인지 한 줄 적습니다. 그 문장이 화면에 그대로 나옵니다.
+
 ## 오프라인 (`sw.js`)
 
 경기 날 구장 주변은 사람이 몰려 네트워크가 제일 안 터지는데, 정작 좌석 지도가
@@ -148,4 +213,5 @@ Cloudflare Worker 주소를 넣습니다 — **키를 클라이언트에 두지 
 - [x] 사용자 제보 창구 (외부 의존성 없이 동작)
 - [x] GitHub Pages 배포 · 공유 미리보기(OG) · 아이콘 · PWA 매니페스트
 - [x] 오프라인 동작 (서비스 워커)
+- [x] 데이터 검사기 + CI
 - [ ] PHASE 5~ — 시야 · 추천 · 가격 · 예매 · 먹거리 · 굿즈 · 교통 · SEO
