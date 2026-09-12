@@ -76,6 +76,51 @@
   }
 
   /* ---------- 경기장(맥락용 그림) ---------- */
+  /* 빛 연출.
+     한강 불꽃축제 명당지도는 까만 지도 위에서 불꽃이 터지고 그 주위로 빛의 고리가
+     퍼진다. 한눈에 "모두가 보려는 그것"이 어디인지, 내가 얼마나 가까운지가 읽힌다.
+     야구장에서 그 자리는 그라운드다. 그래서 그라운드를 빛나게 하고, 홈플레이트에서
+     거리 고리를 퍼뜨린다. */
+  function drawDefs(svg) {
+    const defs = el('defs', {});
+
+    const burst = el('radialGradient', { id: 'kbo-burst' });
+    [['0%', '#fff6d8', '0.85'], ['35%', '#ffd27a', '0.34'],
+     ['70%', '#7fd6a8', '0.10'], ['100%', '#7fd6a8', '0']].forEach(([o, c, op]) => {
+      burst.appendChild(el('stop', { offset: o, 'stop-color': c, 'stop-opacity': op }));
+    });
+    defs.appendChild(burst);
+
+    const f = el('filter', { id: 'kbo-glow', x: '-60%', y: '-60%', width: '220%', height: '220%' });
+    f.appendChild(el('feGaussianBlur', { stdDeviation: '5', result: 'b' }));
+    const merge = el('feMerge', {});
+    merge.appendChild(el('feMergeNode', { in: 'b' }));
+    merge.appendChild(el('feMergeNode', { in: 'SourceGraphic' }));
+    f.appendChild(merge);
+    defs.appendChild(f);
+
+    svg.appendChild(defs);
+  }
+
+  /* 홈플레이트에서 퍼지는 거리 고리. 불꽃축제 지도의 관람 반경 원과 같은 역할이다 —
+     "여기서 얼마나 가까운 자리인가"를 눈으로 재게 해준다.
+     실측 거리가 아니므로 미터를 적지 않는다. 안쪽·중간·바깥이라고만 말한다. */
+  const RINGS = [190, 275, 360];
+
+  function drawRings(g, map) {
+    const { x: cx, y: cy } = map.home;
+    RINGS.forEach((r, i) => {
+      const pts = [];
+      for (let a = 0; a < 360; a += 4) pts.push(pt(cx, cy, r, a));
+      g.appendChild(el('path', {
+        d: pts.map((p, k) => (k ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ') + ' Z',
+        fill: 'none', stroke: '#8fe0bb', 'stroke-width': '1',
+        'stroke-dasharray': '2 8', opacity: String(0.34 - i * 0.06),
+        'pointer-events': 'none'
+      }));
+    });
+  }
+
   function drawField(g, map) {
     const { x: cx, y: cy } = map.home;
     const wall = map.field.wallRadius;
@@ -84,6 +129,15 @@
     // 외야 잔디: 파울라인(±45도) 안쪽만
     const [lx, ly] = pt(cx, cy, wall, -45, true);
     const [rx, ry] = pt(cx, cy, wall, 45, true);
+    // 그라운드에서 퍼지는 빛. 이 화면에서 가장 밝은 곳이 "모두가 보려는 그것"이어야 한다.
+    const glowR = wall * 1.15;
+    const gpts = [];
+    for (let a = 0; a < 360; a += 6) gpts.push(pt(cx, cy, glowR, a, true));
+    g.appendChild(el('path', {
+      d: gpts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ') + ' Z',
+      fill: 'url(#kbo-burst)', 'pointer-events': 'none'
+    }));
+
     // 기울여 볼 때 외야 잔디는 타원으로 눌린다. 호를 직접 그리는 대신
     // 점을 이어 그려야 눌린 모양이 맞는다.
     const arc = [];
@@ -189,8 +243,33 @@
         opacity: z.verified ? '1' : '0.9'
       });
       // 명당은 지도에서 바로 눈에 띄어야 한다 — 이 앱의 이름이 명당지도다.
-      t.textContent = (z.myeongdang ? '🏅 ' : '') + (z.mapLabel || z.name);
+      t.textContent = z.mapLabel || z.name;
       g.appendChild(t);
+
+      // 명당은 배지가 아니라 핀으로 세운다. 불꽃축제 지도에서 명당이 핀으로
+      // 꽂혀 있듯이, 이 화면에서도 "여기다" 하고 가리키는 것이 있어야 한다.
+      if (z.myeongdang) {
+        // 글자 폭을 재지 않고도 겹치지 않게, 라벨 길이에서 대략의 폭을 잡아
+        // 그 왼쪽에 세운다. 위에 두면 바로 윗 띠와 겹친다.
+        const label = z.mapLabel || z.name;
+        // 한글은 글자 하나가 글꼴 크기와 거의 같은 폭을 차지한다.
+        // 0.62로 잡았더니 핀이 글자를 덮었다.
+        const half = label.length * size * 0.5 * 0.98;
+        const px = c[0] - half - size * 0.72;
+        const pin = el('g', { 'pointer-events': 'none', filter: 'url(#kbo-glow)' });
+        pin.appendChild(el('circle', {
+          cx: px.toFixed(1), cy: c[1].toFixed(1), r: (size * 0.52).toFixed(1),
+          fill: '#ffd27a', opacity: '0.95'
+        }));
+        const m = el('text', {
+          x: px.toFixed(1), y: c[1].toFixed(1),
+          'text-anchor': 'middle', 'dominant-baseline': 'central',
+          'font-size': (size * 0.62).toFixed(1)
+        });
+        m.textContent = '🏅';
+        pin.appendChild(m);
+        g.appendChild(pin);
+      }
 
       // 두꺼운 띠에만 보조 배지를 넣는다. 얇은 곳은 범례와 시트가 대신 알려준다.
       if (!z.verified && band > 70 && MODE === 'flat') {
@@ -315,11 +394,14 @@
       style: 'touch-action:none;display:block', role: 'img',
       'aria-label': '좌석 지도. 구역을 눌러 자세히 보세요.'
     });
-    const gField = el('g', {}), gZones = el('g', {}), gFac = el('g', {});
+    drawDefs(svg);
+    const gField = el('g', {}), gRing = el('g', {}), gZones = el('g', {}), gFac = el('g', {});
     drawField(gField, map);
+    drawRings(gRing, map);
     drawZones(gZones, map, handlers.onZone);
     drawFacilities(gFac, map, handlers.onFacility || function () {});
-    svg.appendChild(gField); svg.appendChild(gZones); svg.appendChild(gFac);
+    svg.appendChild(gField); svg.appendChild(gRing);
+    svg.appendChild(gZones); svg.appendChild(gFac);
     container.appendChild(svg);
     return wirePanZoom(svg, box);
   }
