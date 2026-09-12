@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  구장별 검색용 정적 페이지(/stadium/gwangju/ 등)가 생기면 여기에 함께 넣는다.
+  지금은 홈 한 장뿐이다 — 내용이 없는 페이지를 색인시키지 않는다.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://minimalbreeze.github.io/kbo-myeongdang/</loc>
+    <lastmod>2026-09-11</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>

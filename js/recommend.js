@@ -23,28 +23,52 @@
     return total;
   }
 
-  /* 점수가 하나도 없는 구역은 추천 대상에서 뺀다 —
-     비어 있는 데이터를 0점으로 세어 "비추천"처럼 보이게 하면 안 된다. */
-  function scoreSection(section, weights) {
-    let sum = 0, wsum = 0, used = 0;
+  /* 점수 매기기.
+
+     처음에는 "있는 점수만 골라 평균"을 냈는데, 그러면 한 축만 높은 구역이
+     실제로 맞는 구역을 이겼다. 응원 기준인데 챔피언석이 1위로 나왔다 —
+     응원 점수가 아예 없어서 경기 몰입도 하나만 평균이 됐기 때문이다.
+
+     그래서 두 가지를 쓴다.
+       기준 점수(0~75)  가중 평균에 "얼마나 알고 있는지"(coverage)를 곱한다.
+                        모르는 축이 많으면 점수가 낮아진다 — 모르는 것을
+                        좋다고 치지 않는다.
+       근거 가산점(0~25) 출처들이 "이건 무엇에 좋은 자리"라고 공통으로 말한
+                        경우(myeongdangFor)에만 붙는다. 지어낸 가점이 아니라
+                        후기에 실제로 있던 말이다. */
+  function scoreSection(section, weights, prefIds) {
+    const totalWeight = Object.keys(weights).reduce((a, k) => a + weights[k], 0);
+    if (!totalWeight) return null;
+
+    let sum = 0, covered = 0, used = 0;
     Object.keys(weights).forEach((k) => {
       const v = section[k];
       if (typeof v !== 'number') return;
       sum += v * weights[k];
-      wsum += weights[k];
+      covered += weights[k];
       used += 1;
     });
-    if (!used || !wsum) return null;
-    return { value: sum / wsum, coverage: used / Object.keys(weights).length };
+
+    const matched = (section.myeongdangFor || []).filter((x) => prefIds.includes(x)).length;
+    const matchRatio = prefIds.length ? matched / prefIds.length : 0;
+
+    // 점수도 없고 출처의 추천도 없으면 추천 대상이 아니다.
+    if (!used && !matched) return null;
+
+    const avg = covered ? sum / covered : 0;          // 0~5
+    const coverage = covered / totalWeight;           // 0~1
+    const base = (avg * coverage) / 5 * 75;
+    return { value: Math.round(base + matchRatio * 25), coverage };
   }
 
   function rank(sections, prefIds, limit) {
-    const weights = weightsFor(prefIds);
+    const prefs = prefIds || [];
+    const weights = weightsFor(prefs);
     if (!Object.keys(weights).length) return [];
     const scored = (sections || [])
       .map((s) => {
-        const r = scoreSection(s, weights);
-        return r ? { section: s, score: Math.round(r.value * 20), coverage: r.coverage } : null;
+        const r = scoreSection(s, weights, prefs);
+        return r ? { section: s, score: r.value, coverage: r.coverage } : null;
       })
       .filter(Boolean)
       .sort((a, b) => b.score - a.score);

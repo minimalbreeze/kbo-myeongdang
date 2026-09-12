@@ -5,6 +5,35 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>KBO 명당지도 | 야구장 좌석·시야·날씨·예매 한눈에</title>
 <meta name="description" content="야구장 가기 전에 내 자리를 미리 본다. 구장별 좌석 명당과 시야, 직관 날씨, 먹거리·굿즈샵·교통 정보를 한 곳에서 확인하세요." />
+<!-- 공유 미리보기(OG).
+     카카오·X 같은 스크래퍼는 이미지를 "이미지 URL"을 키로 자기 서버에 복사해두고
+     오래 재확인하지 않는다. 그래서 og-image.png의 내용만 바꾸면 공유 카드는 몇 주 동안
+     옛날 그림 그대로다. 그림을 바꿔야 할 때는 내용만 갈아끼우지 말고 파일명을
+     og-image-v2.png 처럼 올릴 것. 옛 파일도 남겨둔다(이미 퍼진 링크가 깨지지 않도록). -->
+<link rel="canonical" href="https://minimalbreeze.github.io/kbo-myeongdang/" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="KBO 명당지도" />
+<meta property="og:locale" content="ko_KR" />
+<meta property="og:title" content="⚾ KBO 명당지도 — 야구장 가기 전에, 내 자리를 미리 본다" />
+<meta property="og:description" content="야구장 가기 전에, 내 자리를 미리 본다. 좌석 지도에서 구역을 눌러 시야와 평가를 확인하고, 직관 날씨와 경기 상태까지 한 화면에서." />
+<meta property="og:image" content="https://minimalbreeze.github.io/kbo-myeongdang/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://minimalbreeze.github.io/kbo-myeongdang/" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="⚾ KBO 명당지도 — 야구장 가기 전에, 내 자리를 미리 본다" />
+<meta name="twitter:description" content="야구장 가기 전에, 내 자리를 미리 본다. 좌석 지도에서 구역을 눌러 시야와 평가를 확인하고, 직관 날씨와 경기 상태까지 한 화면에서." />
+<meta name="twitter:image" content="https://minimalbreeze.github.io/kbo-myeongdang/og-image.png" />
+
+<meta name="theme-color" content="#0b1526" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="명당지도" />
+<meta name="mobile-web-app-capable" content="yes" />
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icon-180.png" />
+<link rel="icon" href="icon.svg" type="image/svg+xml" />
+<link rel="icon" href="icon-192.png" type="image/png" sizes="192x192" />
 <link rel="stylesheet" href="css/base.css" />
 </head>
 <body>
@@ -51,5 +80,15 @@
 <script src="js/recommend.js"></script>
 <script src="js/ui/render.js"></script>
 <script src="js/home.js"></script>
+<!-- 서비스 워커 — 야구장에서 네트워크가 안 터져도 한 번 본 화면과 구장 데이터가 열린다.
+     날씨는 캐시하지 않는다(오래된 날씨를 지금 날씨처럼 보여주지 않는다).
+     등록에 실패해도 앱은 평소대로 동작한다. -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js').catch(function () { /* 없어도 그만 */ });
+    });
+  }
+</script>
 </body>
 </html>

@@ -93,7 +93,7 @@
       .filter(Boolean).join(' · ');
     hint.textContent = labels + ' 기준으로 추천합니다.';
     link.href = 'stadium.html?id=' + encodeURIComponent(target.id) +
-                '&tab=seats&prefs=' + encodeURIComponent(selected.join(','));
+                '&prefs=' + encodeURIComponent(selected.join(','));
     link.textContent = (target.shortName || target.name) + ' 명당 보러가기 ›';
     cta.hidden = false;
     window.KboAnalytics.track('seat_recommend', { prefs: selected.join(',') });

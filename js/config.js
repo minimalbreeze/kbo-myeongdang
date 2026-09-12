@@ -3,8 +3,9 @@ window.KBO_CONFIG = {
   siteName: 'KBO 명당지도',
   tagline: '야구장 가기 전에, 내 자리를 미리 본다.',
 
-  // 배포 주소가 정해지면 여기만 바꾼다. 공유 링크·OG·sitemap이 모두 이 값을 쓴다.
-  siteUrl: '',
+  // 배포 주소. 커스텀 도메인을 붙이면 여기와 함께 index.html·stadium.html의
+  // canonical/og:url, robots.txt, sitemap.xml의 절대 주소도 같이 바꿔야 한다.
+  siteUrl: 'https://minimalbreeze.github.io/kbo-myeongdang/',
 
   dataDir: 'data/',
 

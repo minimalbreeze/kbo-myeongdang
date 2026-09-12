@@ -4,7 +4,7 @@
 
 html, body.map-page { height: 100%; margin: 0; overflow: hidden; }
 
-.map-shell { position: fixed; inset: 0; background: #0b1526; }
+.map-shell { position: fixed; inset: 0; background: radial-gradient(ellipse at 50% 42%, #101d33 0%, #060b16 62%); }
 #seat-map { position: absolute; inset: 0; }
 
 /* ---------- 상단 얇은 헤더 ---------- */

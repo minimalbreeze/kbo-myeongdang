@@ -255,3 +255,40 @@ body {
 .fld textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 .fld .chips { margin-top: 2px; }
 .fld .chip { min-height: 42px; font-size: 14px; padding: 8px 14px; }
+
+/* 명당 배지 — 이 앱의 이름값을 하는 표시라 눈에 띄게 둔다 */
+.badge-my { background: #fdefc3; color: #8a5a00; }
+
+/* 왜 명당인지, 어디서 온 이야기인지 */
+.basis {
+  margin: 12px 0 4px;
+  padding: 12px 14px;
+  background: #fbfcfe;
+  border-left: 3px solid var(--red);
+  border-radius: 0 10px 10px 0;
+  font-size: 14.5px;
+  color: var(--tx);
+}
+
+/* 추천 순위 — 눌러서 해당 구역으로 건너뛴다 */
+.rank-btn {
+  display: flex; width: 100%; text-align: left; gap: 12px;
+  align-items: flex-start; margin: 10px 0; padding: 14px;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: #fff; cursor: pointer; font: inherit; color: inherit;
+}
+.rank-btn:active { background: #f6f8fc; }
+.rank-body { display: flex; flex-direction: column; gap: 5px; align-items: flex-start; }
+.rank-desc { font-size: 13.5px; color: var(--dim); }
+
+/* 이 자리에서 보기 */
+#seat-view { margin: 8px 0 6px; }
+.view-hint { margin: 0 0 8px; font-size: 12.5px; color: var(--dim); text-align: center; }
+
+/* 블록 번호 */
+.blocks { margin: 10px 0 2px; font-size: 15px; }
+.blocks b {
+  display: inline-block; padding: 3px 10px; margin: 0 2px;
+  background: var(--navy-100); color: var(--navy-800);
+  border-radius: 8px; font-weight: 800;
+}
