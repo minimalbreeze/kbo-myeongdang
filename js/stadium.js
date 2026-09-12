@@ -257,21 +257,33 @@
     ];
     blocks.forEach(([title, items, ev, pick]) => {
       html += '<h3 style="margin-top:18px">' + title + '</h3>';
-      html += (items && items.length)
-        ? '<ul class="scores">' + items.map((x) =>
-            '<li><span>' + R.textOr(pick(x)) + '</span><span>' + R.textOr(x.location) + '</span></li>').join('') + '</ul>'
-        : R.emptyBox('정보 준비 중');
-      if (items && items.length) window.KboAnalytics.track(ev, { stadium: stadium.id });
+      if (items && items.length) {
+        html += items.map((x) =>
+          '<div class="place">' +
+          '<div class="place-top"><b>' + R.textOr(pick(x)) + '</b>' +
+          '<span class="place-where">' + R.textOr(x.location) + '</span></div>' +
+          (x.menu && x.menu.length
+            ? '<div class="place-menu">' + x.menu.map((mm) =>
+                '<span>' + R.esc(mm) + '</span>').join('') + '</div>' : '') +
+          (x.description ? '<p class="place-desc">' + R.esc(x.description) + '</p>' : '') +
+          '</div>').join('');
+        window.KboAnalytics.track(ev, { stadium: stadium.id });
+      } else {
+        html += R.emptyBox('정보 준비 중');
+      }
     });
 
     // 교통
     const t = await safe(() => window.KboData.transport(stadium.id));
-    html += '<h3 style="margin-top:18px">🚇 교통</h3><ul class="scores">' +
-      [['지하철', t && t.subway], ['버스', t && t.bus],
-       ['주차', t && t.parking && t.parking.verified ? t.parking.spaces + '대' : null],
-       ['출입구', t && t.entrance]]
-        .map((r) => '<li><span>' + r[0] + '</span><span>' + R.textOr(r[1]) + '</span></li>').join('') +
-      '</ul><p class="meta">검증되지 않은 정보는 표시하지 않습니다.</p>';
+    html += '<h3 style="margin-top:18px">🚇 교통</h3>';
+    html += [['🚇 지하철', t && t.subway], ['🚌 버스', t && t.bus],
+             ['🅿️ 주차', t && t.parking && t.parking.note],
+             ['🚶 출입구', t && t.entrance]]
+      .map((r) => '<div class="place"><div class="place-top"><b>' + R.esc(r[0]) + '</b></div>' +
+        '<p class="place-desc">' + R.textOr(r[1]) + '</p></div>').join('');
+    if (t && t.tips) html += '<p class="basis">' + R.esc(t.tips) + '</p>';
+    html += R.meta(t && t.updatedAt, t && t.sources);
+    html += '<p class="meta">검증되지 않은 정보는 표시하지 않습니다.</p>';
 
     // 구장 기본정보
     html += '<h3 style="margin-top:18px">🏟️ 구장 정보</h3><ul class="scores">' +
