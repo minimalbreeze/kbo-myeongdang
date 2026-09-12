@@ -31,7 +31,7 @@ const top = (prefs) => {
 // ---------- 실제 데이터로 ----------
 // 출처들이 공통으로 말한 내용과 순위가 맞아야 한다.
 check('경기 집중 1위는 홈 뒤쪽 자리', ['champion', 'k9'].includes(top(['focus'])), top(['focus']));
-check('응원 1위는 K8석', top(['cheer']) === 'k8', top(['cheer']));
+check('응원 1위는 3루 K8석', top(['cheer']) === 'k8-3b', top(['cheer']));
 check('가성비 1위는 외야 자유석', top(['value']) === 'outfield', top(['value']));
 check('커플 1위는 테이블석', top(['couple']) === 'table', top(['couple']));
 check('가족 1위는 테이블석', top(['family']) === 'table', top(['family']));

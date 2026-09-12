@@ -284,3 +284,11 @@ body {
 /* 이 자리에서 보기 */
 #seat-view { margin: 8px 0 6px; }
 .view-hint { margin: 0 0 8px; font-size: 12.5px; color: var(--dim); text-align: center; }
+
+/* 블록 번호 */
+.blocks { margin: 10px 0 2px; font-size: 15px; }
+.blocks b {
+  display: inline-block; padding: 3px 10px; margin: 0 2px;
+  background: var(--navy-100); color: var(--navy-800);
+  border-radius: 8px; font-weight: 800;
+}

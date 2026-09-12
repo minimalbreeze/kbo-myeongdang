@@ -53,6 +53,11 @@
 
     // 왜 명당이라고 하는지, 어디서 온 이야기인지를 먼저 말한다.
     // 이건 공식 평가가 아니라 후기를 모은 것이므로 출처를 숨기지 않는다.
+    if (section && section.blocks && section.blocks.length) {
+      html += '<p class="blocks">블록 ' + section.blocks.map((b) =>
+        '<b>' + R.esc(b) + '</b>').join(' · ') + '</p>';
+      if (section.blocksNote) html += '<p class="meta">' + R.esc(section.blocksNote) + '</p>';
+    }
     if (section && section.basis) {
       html += '<p class="basis">' + R.esc(section.basis) + '</p>';
       if (section.sources && section.sources.length) {
@@ -94,7 +99,13 @@
         '<p class="view-hint">손가락으로 끌어서 둘러보세요 ↔</p>' +
         '<p class="meta">이 그림은 <b>사진이 아니라 기하 개략도</b>입니다. ' +
         '베이스 간격·마운드 거리·수비 위치는 야구의 규격이지만, 이 구장의 실제 외야 거리와 ' +
-        '스탠드 높이는 실측이 아닙니다. 실제 시야 사진이 생기면 그쪽을 먼저 보여줍니다.</p>';
+        '스탠드 높이는 실측이 아닙니다.</p>';
+      if (section && section.viewPhotosUrl) {
+        html += '<p><a class="btn btn-ghost btn-block" href="' + R.esc(section.viewPhotosUrl) +
+          '" target="_blank" rel="noopener">📷 실제 시야 사진 보러가기 ›</a></p>' +
+          '<p class="meta">자리어때에 이 구장 구역별 시야 사진이 올라와 있습니다. ' +
+          '개략도보다 사진이 정확하니 그쪽을 함께 보세요.</p>';
+      }
     }
 
     // 가격
