@@ -1,14 +1,37 @@
 {
   "schemaVersion": 1,
-  "note": "화장실·편의점·ATM·물품보관함·게이트 등. 좌표가 있을 때만 거리 표시를 허용한다.",
+  "note": "화장실·편의점·ATM 등의 위치는 공식 구장 안내도가 있어야 합니다. 블로그 후기로는 층·게이트까지 특정할 수 없어 비워 둡니다. 좌표가 있을 때만 거리 표시를 허용합니다.",
   "types": {
-    "toilet":  { "emoji": "🚻", "label": "화장실" },
-    "store":   { "emoji": "🏪", "label": "편의점" },
-    "atm":     { "emoji": "🏧", "label": "ATM" },
-    "locker":  { "emoji": "🧳", "label": "물품보관함" },
-    "smoking": { "emoji": "🚬", "label": "흡연구역" },
-    "gate":    { "emoji": "🚪", "label": "출입구" },
-    "parking": { "emoji": "🅿️", "label": "주차장" }
+    "toilet": {
+      "emoji": "🚻",
+      "label": "화장실"
+    },
+    "store": {
+      "emoji": "🏪",
+      "label": "편의점"
+    },
+    "atm": {
+      "emoji": "🏧",
+      "label": "ATM"
+    },
+    "locker": {
+      "emoji": "🧳",
+      "label": "물품보관함"
+    },
+    "smoking": {
+      "emoji": "🚬",
+      "label": "흡연구역"
+    },
+    "gate": {
+      "emoji": "🚪",
+      "label": "출입구"
+    },
+    "parking": {
+      "emoji": "🅿️",
+      "label": "주차장"
+    }
   },
-  "stadiums": { "gwangju": [] }
+  "stadiums": {
+    "gwangju": []
+  }
 }

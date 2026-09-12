@@ -134,7 +134,8 @@
             }
           ],
           "updatedAt": "2026-09-12",
-          "viewPhotosUrl": "https://myseatcheck.com/%EA%B4%91%EC%A3%BC-kia-%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4%ED%95%84%EB%93%9C/"
+          "viewPhotosUrl": "https://myseatcheck.com/%EA%B4%91%EC%A3%BC-kia-%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4%ED%95%84%EB%93%9C/",
+          "side": "neutral"
         },
         {
           "section": "k9",
@@ -172,7 +173,8 @@
             "112"
           ],
           "blocksNote": "1루측 K9존 112구역이 자리어때에 등록되어 있다. 전체 블록 범위는 공식 좌석도 확인 필요.",
-          "viewPhotosUrl": "https://myseatcheck.com/%EA%B4%91%EC%A3%BC-kia-%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4%ED%95%84%EB%93%9C/"
+          "viewPhotosUrl": "https://myseatcheck.com/%EA%B4%91%EC%A3%BC-kia-%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4%ED%95%84%EB%93%9C/",
+          "side": "neutral"
         },
         {
           "section": "table",
@@ -205,7 +207,8 @@
             }
           ],
           "updatedAt": "2026-09-12",
-          "viewPhotosUrl": "https://myseatcheck.com/%EA%B4%91%EC%A3%BC-kia-%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4%ED%95%84%EB%93%9C/"
+          "viewPhotosUrl": "https://myseatcheck.com/%EA%B4%91%EC%A3%BC-kia-%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4%ED%95%84%EB%93%9C/",
+          "side": "neutral"
         },
         {
           "section": "k8-3b",
@@ -217,8 +220,8 @@
           "myeongdangFor": [
             "cheer"
           ],
-          "description": "3루측 응원단상 앞. 경기 흐름보다 현장 분위기를 먼저 즐기고 싶을 때.",
-          "basis": "여러 후기에서 응원 명당으로 공통 언급(120~122블록 인근). 3루 쪽이 홈팬 응원 몰입감이 크다는 평가도 반복된다.",
+          "description": "3루측 응원단상 앞. KIA 홈 응원석이다. 경기 흐름보다 현장 분위기를 먼저 즐기고 싶을 때.",
+          "basis": "3루가 홈팀 응원석이라는 것과 응원 명당이라는 것이 복수 출처에서 공통 언급된다. 구장 방향 탓에 3루쪽에 그늘이 빨리 진다는 설명도 반복된다.",
           "confidence": "corroborated",
           "sources": [
             {
@@ -236,16 +239,25 @@
             {
               "name": "자리어때 — 구역별 실제 시야 사진",
               "url": "https://myseatcheck.com/%EA%B4%91%EC%A3%BC-kia-%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4%ED%95%84%EB%93%9C/"
+            },
+            {
+              "name": "나무위키 — 광주-기아 챔피언스 필드",
+              "url": "https://namu.wiki/w/%EA%B4%91%EC%A3%BC-%EA%B8%B0%EC%95%84%20%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4%20%ED%95%84%EB%93%9C"
             }
           ],
           "updatedAt": "2026-09-12",
           "blocks": [
+            "118",
+            "119",
             "120",
             "121",
-            "122"
+            "122",
+            "123"
           ],
-          "blocksNote": "응원단상 앞. 자리어때에 3루 K8존 120구역 시야 사진이 있다.",
-          "viewPhotosUrl": "https://myseatcheck.com/%EA%B4%91%EC%A3%BC-kia-%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4%ED%95%84%EB%93%9C/"
+          "blocksNote": "3루 홈 응원석. 118~122블록에서 123블록까지 넓혔다는 설명이 있다.",
+          "viewPhotosUrl": "https://myseatcheck.com/%EA%B4%91%EC%A3%BC-kia-%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4%ED%95%84%EB%93%9C/",
+          "side": "home",
+          "sunScore": 4
         },
         {
           "section": "k8-1b",
@@ -255,16 +267,29 @@
             "110"
           ],
           "blocksNote": "자리어때에 1루 K8존 109·110구역 시야 사진이 있다.",
-          "description": "1루측 K8존. 3루측보다 조용한 편이라는 후기가 있다.",
-          "basis": "1루측에도 K8존이 있다는 것이 구역별 시야 사진으로 확인된다. 다만 명당으로 꼽히는 쪽은 3루측이다.",
+          "description": "1루측 K8존. 이 구장에서는 원정팬 응원석 쪽이다.",
+          "basis": "광주는 3루가 홈 응원석이므로 원정 응원석은 1루측이다. 구장 방향 탓에 1루쪽은 그늘이 늦게 진다는 설명이 있다.",
           "confidence": "corroborated",
           "sources": [
             {
               "name": "자리어때 — 구역별 실제 시야 사진",
               "url": "https://myseatcheck.com/%EA%B4%91%EC%A3%BC-kia-%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4%ED%95%84%EB%93%9C/"
+            },
+            {
+              "name": "나무위키 — 광주-기아 챔피언스 필드",
+              "url": "https://namu.wiki/w/%EA%B4%91%EC%A3%BC-%EA%B8%B0%EC%95%84%20%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4%20%ED%95%84%EB%93%9C"
             }
           ],
-          "updatedAt": "2026-09-12"
+          "updatedAt": "2026-09-12",
+          "side": "away",
+          "myeongdang": true,
+          "myeongdangFor": [
+            "cheer"
+          ],
+          "cheerScore": 4,
+          "gameScore": 3,
+          "viewScore": 3,
+          "sunScore": 2
         },
         {
           "section": "k5",
@@ -297,7 +322,8 @@
             }
           ],
           "updatedAt": "2026-09-12",
-          "viewPhotosUrl": "https://myseatcheck.com/%EA%B4%91%EC%A3%BC-kia-%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4%ED%95%84%EB%93%9C/"
+          "viewPhotosUrl": "https://myseatcheck.com/%EA%B4%91%EC%A3%BC-kia-%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4%ED%95%84%EB%93%9C/",
+          "side": "neutral"
         },
         {
           "section": "outfield",
@@ -331,10 +357,50 @@
             }
           ],
           "updatedAt": "2026-09-12",
-          "viewPhotosUrl": "https://myseatcheck.com/%EA%B4%91%EC%A3%BC-kia-%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4%ED%95%84%EB%93%9C/"
+          "viewPhotosUrl": "https://myseatcheck.com/%EA%B4%91%EC%A3%BC-kia-%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4%ED%95%84%EB%93%9C/",
+          "side": "neutral"
+        },
+        {
+          "section": "ev-1b",
+          "seatName": "EV석 (1루)",
+          "side": "away",
+          "blocks": [
+            "507"
+          ],
+          "blocksNote": "자리어때에 1루 EV존 507구역 시야 사진이 있다.",
+          "basis": "등급 이름과 블록 번호만 확인됐다. 평가는 아직 모아둔 후기가 없다.",
+          "confidence": "corroborated",
+          "sources": [
+            {
+              "name": "자리어때 — 구역별 실제 시야 사진",
+              "url": "https://myseatcheck.com/%EA%B4%91%EC%A3%BC-kia-%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4%ED%95%84%EB%93%9C/"
+            }
+          ],
+          "viewPhotosUrl": "https://myseatcheck.com/%EA%B4%91%EC%A3%BC-kia-%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4%ED%95%84%EB%93%9C/",
+          "updatedAt": "2026-09-12"
+        },
+        {
+          "section": "ev-3b",
+          "seatName": "EV석 (3루)",
+          "side": "home",
+          "blocks": [
+            "524"
+          ],
+          "blocksNote": "자리어때에 3루 EV석 524구역 시야 사진이 있다.",
+          "basis": "등급 이름과 블록 번호만 확인됐다. 평가는 아직 모아둔 후기가 없다.",
+          "confidence": "corroborated",
+          "sources": [
+            {
+              "name": "자리어때 — 구역별 실제 시야 사진",
+              "url": "https://myseatcheck.com/%EA%B4%91%EC%A3%BC-kia-%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4%ED%95%84%EB%93%9C/"
+            }
+          ],
+          "viewPhotosUrl": "https://myseatcheck.com/%EA%B4%91%EC%A3%BC-kia-%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4%ED%95%84%EB%93%9C/",
+          "updatedAt": "2026-09-12"
         }
       ],
       "sectionsNote": "여러 관람 후기에서 공통으로 언급되는 내용만 담았습니다. 공식 평가가 아니며, 출처가 말하지 않은 항목(햇빛·날씨·편의시설 영향, 사진 촬영 등)은 비워 두었습니다. 블록 번호와 실제 가격은 공식 좌석도 확인 후 채웁니다."
     }
-  }
+  },
+  "sideNote": "side는 이 구장에서 그 자리가 어느 쪽 응원석인지입니다. 광주는 3루가 홈(KIA), 1루가 원정입니다. 구장마다 다릅니다 — 원정 팬이 모르고 홈 응원석에 앉으면 난처합니다."
 }

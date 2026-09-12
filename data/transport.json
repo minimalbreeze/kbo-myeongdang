@@ -3,13 +3,27 @@
   "note": "검증되지 않은 역명·출구·버스번호·주차 정보는 넣지 않는다.",
   "stadiums": {
     "gwangju": {
-      "subway": null,
-      "bus": null,
-      "parking": { "spaces": 1658, "verified": false, "note": "2차 출처 기준. 공식 확인 필요." },
+      "subway": "구장을 지나는 도시철도가 없습니다. 광주송정역에서 1호선을 타고 금남로5가역까지 간 뒤 버스나 택시로 환승하는 경로를 많이 씁니다.",
+      "bus": "유스퀘어(광주종합버스터미널)에서 금호36·160·419번 → '기아 챔피언스필드' 정류장, 25~30분. 228번 → 무등야구장 정류장 하차 후 도보 3~4분. 매월16·일곡38번 → 정문 정류장 하차 후 도보 3분.",
+      "parking": {
+        "spaces": 1658,
+        "verified": false,
+        "note": "구장 지하주차장, 옆 무등야구장 지하주차장, 다리 건너 임동 공영주차장을 씁니다. 경기일 요금과 운영 방식은 공식 확인이 필요합니다."
+      },
       "entrance": null,
       "exit": null,
-      "tips": null,
-      "updatedAt": "2026-09-11"
+      "tips": "경기 당일에는 주차장이 일찍 찬다는 후기가 많습니다. 광주투어버스 정류장도 추가되어 있습니다.",
+      "sources": [
+        {
+          "name": "주차·교통 안내 (여행픽)",
+          "url": "https://www.thetrippick.com/news/articleView.html?idxno=3229"
+        },
+        {
+          "name": "챔피언스필드 완전정복 가이드",
+          "url": "https://gogoabroad.co.kr/entry/%EA%B4%91%EC%A3%BC-%EA%B8%B0%EC%95%84-%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4-%ED%95%84%EB%93%9C"
+        }
+      ],
+      "updatedAt": "2026-09-12"
     }
   }
 }

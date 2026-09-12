@@ -1,5 +1,93 @@
 {
   "schemaVersion": 1,
-  "note": "확인되지 않은 매장·메뉴·가격은 넣지 않는다. 비어 있으면 화면은 '정보 준비 중'을 표시한다.",
-  "stadiums": { "gwangju": [] }
+  "note": "확인되지 않은 매장·메뉴·가격은 넣지 않습니다. 여기 있는 내용은 여러 후기에서 공통으로 언급되는 것이고, 입점 브랜드는 시즌마다 바뀌므로 최신 현황은 공식 확인이 필요합니다.",
+  "stadiums": {
+    "gwangju": [
+      {
+        "storeId": "food-3f-infield",
+        "storeName": "3층 내야 푸드존",
+        "location": "3층 내야",
+        "floor": "3F",
+        "menu": [
+          "떡볶이",
+          "순대",
+          "핫도그",
+          "피자",
+          "버거",
+          "치킨",
+          "감자튀김"
+        ],
+        "price": null,
+        "recommendation": "빠르게 한 끼",
+        "description": "즉석 조리 메뉴가 몰려 있어 경기 전에 채우기 좋다는 후기가 많다.",
+        "verified": false,
+        "confidence": "corroborated",
+        "sources": [
+          {
+            "name": "챔피언스필드 먹거리 층별 안내",
+            "url": "https://sec.smartjj.co.kr/entry/%EA%B8%B0%EC%95%84-%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4%ED%95%84%EB%93%9C-%EB%A8%B9%EA%B1%B0%EB%A6%AC"
+          },
+          {
+            "name": "챔피언스필드 완전정복 가이드",
+            "url": "https://gogoabroad.co.kr/entry/%EA%B4%91%EC%A3%BC-%EA%B8%B0%EC%95%84-%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4-%ED%95%84%EB%93%9C"
+          }
+        ],
+        "updatedAt": "2026-09-12"
+      },
+      {
+        "storeId": "food-5f-outfield",
+        "storeName": "5층 외야 푸드존",
+        "location": "5층 외야",
+        "floor": "5F",
+        "menu": null,
+        "price": null,
+        "recommendation": "이닝 사이 간식",
+        "description": "대기줄이 상대적으로 짧은 편이라 이닝 간 짧은 시간에 들르기 좋다는 후기가 많다.",
+        "verified": false,
+        "confidence": "corroborated",
+        "sources": [
+          {
+            "name": "챔피언스필드 먹거리 층별 안내",
+            "url": "https://sec.smartjj.co.kr/entry/%EA%B8%B0%EC%95%84-%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4%ED%95%84%EB%93%9C-%EB%A8%B9%EA%B1%B0%EB%A6%AC"
+          },
+          {
+            "name": "챔피언스필드 완전정복 가이드",
+            "url": "https://gogoabroad.co.kr/entry/%EA%B4%91%EC%A3%BC-%EA%B8%B0%EC%95%84-%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4-%ED%95%84%EB%93%9C"
+          }
+        ],
+        "updatedAt": "2026-09-12"
+      },
+      {
+        "storeId": "food-brands",
+        "storeName": "입점 브랜드 (위치 확인 중)",
+        "location": null,
+        "floor": null,
+        "menu": [
+          "BHC 치킨",
+          "BBQ치킨 프리미엄 카페",
+          "프랭크버거",
+          "임실치즈피자",
+          "엔제리너스",
+          "롯데리아",
+          "인크커피"
+        ],
+        "price": null,
+        "recommendation": null,
+        "description": "인크커피 챔피언스필드점에는 '야구공빵' 한정 메뉴가 있다고 알려져 있다. 브랜드는 시즌마다 바뀌므로 최신 현황은 공식 확인 필요.",
+        "verified": false,
+        "confidence": "corroborated",
+        "sources": [
+          {
+            "name": "챔피언스필드 먹거리 층별 안내",
+            "url": "https://sec.smartjj.co.kr/entry/%EA%B8%B0%EC%95%84-%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4%ED%95%84%EB%93%9C-%EB%A8%B9%EA%B1%B0%EB%A6%AC"
+          },
+          {
+            "name": "챔피언스필드 완전정복 가이드",
+            "url": "https://gogoabroad.co.kr/entry/%EA%B4%91%EC%A3%BC-%EA%B8%B0%EC%95%84-%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4-%ED%95%84%EB%93%9C"
+          }
+        ],
+        "updatedAt": "2026-09-12"
+      }
+    ]
+  }
 }

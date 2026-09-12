@@ -7,9 +7,13 @@
   const q = new URLSearchParams(location.search);
 
   let stadium = null, mapData = null, seatData = { sections: [], seatTypes: [] }, controller = null;
-  const VIEW_KEY = 'kbo:mapView';
-  let viewMode = 'flat';   // flat = 평면도, tilt = 기울여 본 입체
   let openedZone = null;   // 시트가 지금 보여주는 구역 (버튼 위임에서 쓴다)
+
+  /* 응원하는 쪽. 광주는 3루가 홈(KIA), 1루가 원정이다. 구장마다 다르므로
+     데이터의 side를 보고 판단한다. 원정 팬에게 홈 응원석은 명당이 아니다. */
+  const SIDE_KEY = 'kbo:fanSide';
+  let fanSide = 'home';
+  const SIDE_LABEL = { home: '홈 응원석', away: '원정 응원석', neutral: '' };
 
   const sheet = () => document.getElementById('sheet');
   const body = () => document.getElementById('sheet-body');
@@ -45,9 +49,16 @@
     };
 
     let html = '<h2>' + R.esc(zone.name) + '</h2><p>';
-    if (section && section.myeongdang) {
+    const side = (section && section.side) || zone.side || 'neutral';
+    const mine = side === 'neutral' || side === fanSide;
+    if (section && section.myeongdang && mine) {
       const forWhat = (section.myeongdangFor || []).map((k) => MY_LABEL[k]).filter(Boolean).join('·');
       html += '<span class="badge badge-my">🏅 명당' + (forWhat ? ' · ' + R.esc(forWhat) : '') + '</span> ';
+    }
+    if (SIDE_LABEL[side]) {
+      html += '<span class="badge ' + (mine ? 'badge-ok' : 'badge-bad') + '">' +
+        (side === 'home' ? '🏠 ' : '✈️ ') + R.esc(SIDE_LABEL[side]) +
+        (mine ? '' : ' · 상대 쪽') + '</span> ';
     }
     html += '<span class="badge ' + c.cls + '">' + R.esc(c.badge) + '</span></p>';
 
@@ -259,21 +270,43 @@
     ];
     blocks.forEach(([title, items, ev, pick]) => {
       html += '<h3 style="margin-top:18px">' + title + '</h3>';
-      html += (items && items.length)
-        ? '<ul class="scores">' + items.map((x) =>
-            '<li><span>' + R.textOr(pick(x)) + '</span><span>' + R.textOr(x.location) + '</span></li>').join('') + '</ul>'
-        : R.emptyBox('정보 준비 중');
-      if (items && items.length) window.KboAnalytics.track(ev, { stadium: stadium.id });
+      if (items && items.length) {
+        html += items.map((x) =>
+          '<div class="place">' +
+          '<div class="place-top"><b>' + R.textOr(pick(x)) + '</b>' +
+          '<span class="place-where">' + R.textOr(x.location) + '</span></div>' +
+          (x.menu && x.menu.length
+            ? '<div class="place-menu">' + x.menu.map((mm) =>
+                '<span>' + R.esc(mm) + '</span>').join('') + '</div>' : '') +
+          (x.description ? '<p class="place-desc">' + R.esc(x.description) + '</p>' : '') +
+          '</div>').join('');
+        window.KboAnalytics.track(ev, { stadium: stadium.id });
+      } else {
+        html += R.emptyBox('정보 준비 중');
+      }
     });
+
+    // 이벤트 존
+    const evs = await safe(() => window.KboData.events(stadium.id));
+    html += '<h3 style="margin-top:18px">🎪 이벤트 존</h3>';
+    html += (evs && evs.length)
+      ? evs.map((e) => '<div class="place"><div class="place-top"><b>' + R.textOr(e.name) + '</b>' +
+          '<span class="place-where">' + R.textOr(e.location) + '</span></div>' +
+          (e.description ? '<p class="place-desc">' + R.esc(e.description) + '</p>' : '') +
+          '</div>').join('') + '<p class="meta">행사는 시즌·경기마다 바뀝니다.</p>'
+      : R.emptyBox('이벤트 존 정보 준비 중');
 
     // 교통
     const t = await safe(() => window.KboData.transport(stadium.id));
-    html += '<h3 style="margin-top:18px">🚇 교통</h3><ul class="scores">' +
-      [['지하철', t && t.subway], ['버스', t && t.bus],
-       ['주차', t && t.parking && t.parking.verified ? t.parking.spaces + '대' : null],
-       ['출입구', t && t.entrance]]
-        .map((r) => '<li><span>' + r[0] + '</span><span>' + R.textOr(r[1]) + '</span></li>').join('') +
-      '</ul><p class="meta">검증되지 않은 정보는 표시하지 않습니다.</p>';
+    html += '<h3 style="margin-top:18px">🚇 교통</h3>';
+    html += [['🚇 지하철', t && t.subway], ['🚌 버스', t && t.bus],
+             ['🅿️ 주차', t && t.parking && t.parking.note],
+             ['🚶 출입구', t && t.entrance]]
+      .map((r) => '<div class="place"><div class="place-top"><b>' + R.esc(r[0]) + '</b></div>' +
+        '<p class="place-desc">' + R.textOr(r[1]) + '</p></div>').join('');
+    if (t && t.tips) html += '<p class="basis">' + R.esc(t.tips) + '</p>';
+    html += R.meta(t && t.updatedAt, t && t.sources);
+    html += '<p class="meta">검증되지 않은 정보는 표시하지 않습니다.</p>';
 
     // 구장 기본정보
     html += '<h3 style="margin-top:18px">🏟️ 구장 정보</h3><ul class="scores">' +
@@ -330,25 +363,26 @@
     mapData = await safe(() => window.KboData.load('map/' + stadium.id + '.json'));
 
     const host = document.getElementById('seat-map');
-    try { viewMode = localStorage.getItem(VIEW_KEY) === 'tilt' ? 'tilt' : 'flat'; } catch (e) {}
+    try { fanSide = localStorage.getItem(SIDE_KEY) === 'away' ? 'away' : 'home'; } catch (e) {}
 
     function drawMap() {
       controller = window.KboSeatMap.render(host, mapData, {
         onZone: openZone,
         onFacility: (f) => openSheet('<h2>' + R.esc(f.name) + '</h2>' +
           '<p>' + R.textOr(f.location) + '</p>')
-      }, viewMode);
-      const b = document.getElementById('view-btn');
-      b.textContent = viewMode === 'tilt' ? '🗺️ 평면으로 보기' : '🏟️ 입체로 보기';
-      b.setAttribute('aria-pressed', String(viewMode === 'tilt'));
+      }, { fanSide: fanSide });
+      const b = document.getElementById('side-btn');
+      b.textContent = fanSide === 'away' ? '✈️ 원정 팬' : '🏠 홈 팬';
+      b.title = '누르면 ' + (fanSide === 'away' ? '홈' : '원정') + ' 팬 기준으로 바뀝니다';
     }
 
     if (mapData) {
       drawMap();
-      document.getElementById('view-btn').addEventListener('click', () => {
-        viewMode = viewMode === 'tilt' ? 'flat' : 'tilt';
-        try { localStorage.setItem(VIEW_KEY, viewMode); } catch (e) {}
+      document.getElementById('side-btn').addEventListener('click', () => {
+        fanSide = fanSide === 'away' ? 'home' : 'away';
+        try { localStorage.setItem(SIDE_KEY, fanSide); } catch (e) {}
         drawMap();
+        window.KboShare.toast(fanSide === 'away' ? '원정 팬 기준으로 봅니다 ✈️' : '홈 팬 기준으로 봅니다 🏠');
       });
       // 개략도라는 사실은 범례 안에 둔다 — 화면 위에 떠다니는 글이 하나 줄고,
       // 신뢰도 설명과 같은 자리에 있어야 뜻이 통한다.

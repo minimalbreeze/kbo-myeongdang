@@ -292,3 +292,18 @@ body {
   background: var(--navy-100); color: var(--navy-800);
   border-radius: 8px; font-weight: 800;
 }
+
+/* 먹거리·굿즈·시설·교통 카드 */
+.place {
+  border: 1px solid var(--line); border-radius: 12px;
+  padding: 12px 14px; margin: 8px 0; background: #fff;
+}
+.place-top { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.place-top b { font-size: 15.5px; }
+.place-where { font-size: 13.5px; color: var(--dim); white-space: nowrap; }
+.place-menu { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.place-menu span {
+  font-size: 13px; padding: 4px 10px; border-radius: 999px;
+  background: var(--navy-100); color: var(--navy-800);
+}
+.place-desc { margin: 8px 0 0; font-size: 14px; color: var(--dim); line-height: 1.6; }
