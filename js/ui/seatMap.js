@@ -153,19 +153,27 @@
 
   /* 명당은 응원하는 쪽에 따라 다르다. 광주는 3루가 홈이라, 원정 팬에게
      3루 응원석은 명당이 아니라 피해야 할 자리다. */
+  /* 아홉 구역 중 여섯에 메달을 달았더니 "어디가 명당인지" 알 수가 없었다.
+     전부가 명당이면 아무 데도 명당이 아니다. 이제 1·2·3위만 표시하고
+     나머지는 흐리게 둔다. */
+  const MEDALS = ['🥇', '🥈', '🥉'];
+
   function isMyeongdang(z, fanSide) {
     if (!z.myeongdang) return false;
     if (!z.side || z.side === 'neutral') return true;
     return z.side === fanSide;
   }
 
-  function drawZones(g, map, onPick, fanSide) {
+  function drawZones(g, map, onPick, fanSide, ranks) {
     const { x: cx, y: cy } = map.home;
     map.zones.forEach((z) => {
       const st = STYLE[z.verified ? 'verified' : (z.confidence || 'unplaced')] || STYLE.unplaced;
+      const rank = ranks && ranks[z.id];
+      // 순위 밖 구역은 흐리게 — 1·2·3위가 한눈에 들어와야 한다.
+      const dim = (ranks && Object.keys(ranks).length && !rank) ? 0.42 : 1;
       const path = el('path', {
         d: sectorPath(cx, cy, z.r0, z.r1, z.a0, z.a1),
-        fill: st.fill, 'fill-opacity': st.op,
+        fill: st.fill, 'fill-opacity': (st.op * dim).toFixed(2),
         stroke: '#ffffff', 'stroke-width': '2', 'stroke-dasharray': st.dash,
         'data-zone': z.id, tabindex: '0', role: 'button',
         'aria-label': z.name + (z.verified ? ' (확인됨)' : ' (확인 중)') +
@@ -195,25 +203,25 @@
 
       // 명당은 배지가 아니라 핀으로 세운다. 불꽃축제 지도에서 명당이 핀으로
       // 꽂혀 있듯이, 이 화면에서도 "여기다" 하고 가리키는 것이 있어야 한다.
-      if (isMyeongdang(z, fanSide)) {
+      if (rank && rank <= 3) {
         // 글자 폭을 재지 않고도 겹치지 않게, 라벨 길이에서 대략의 폭을 잡아
         // 그 왼쪽에 세운다. 위에 두면 바로 윗 띠와 겹친다.
         const label = z.mapLabel || z.name;
         // 한글은 글자 하나가 글꼴 크기와 거의 같은 폭을 차지한다.
         // 0.62로 잡았더니 핀이 글자를 덮었다.
         const half = label.length * size * 0.5 * 0.98;
-        const px = c[0] - half - size * 0.72;
+        const px = c[0] - half - size * 0.95;
         const pin = el('g', { 'pointer-events': 'none', filter: 'url(#kbo-glow)' });
         pin.appendChild(el('circle', {
-          cx: px.toFixed(1), cy: c[1].toFixed(1), r: (size * 0.52).toFixed(1),
-          fill: '#ffd27a', opacity: '0.95'
+          cx: px.toFixed(1), cy: c[1].toFixed(1), r: (size * 0.64).toFixed(1),
+          fill: rank === 1 ? '#ffd27a' : rank === 2 ? '#dde4ef' : '#e2a874', opacity: '1'
         }));
         const m = el('text', {
           x: px.toFixed(1), y: c[1].toFixed(1),
           'text-anchor': 'middle', 'dominant-baseline': 'central',
-          'font-size': (size * 0.62).toFixed(1)
+          'font-size': (size * 0.74).toFixed(1)
         });
-        m.textContent = '🏅';
+        m.textContent = MEDALS[rank - 1];
         pin.appendChild(m);
         g.appendChild(pin);
       }
@@ -328,7 +336,7 @@
     const gField = el('g', {}), gRing = el('g', {}), gZones = el('g', {}), gFac = el('g', {});
     drawField(gField, map);
     drawRings(gRing, map);
-    drawZones(gZones, map, handlers.onZone, opts && opts.fanSide);
+    drawZones(gZones, map, handlers.onZone, opts && opts.fanSide, opts && opts.ranks);
     drawFacilities(gFac, map, handlers.onFacility || function () {});
     svg.appendChild(gField); svg.appendChild(gRing);
     svg.appendChild(gZones); svg.appendChild(gFac);

@@ -11,6 +11,23 @@
 
   /* 응원하는 쪽. 광주는 3루가 홈(KIA), 1루가 원정이다. 구장마다 다르므로
      데이터의 side를 보고 판단한다. 원정 팬에게 홈 응원석은 명당이 아니다. */
+  /* 지도에 1·2·3위를 매길 기준. 홈에서 취향을 고르고 왔으면 그걸 쓰고,
+     아니면 종합(경기 집중·응원·가성비)으로 본다. */
+  const DEFAULT_PREFS = ['focus', 'cheer', 'value'];
+  let ranks = {};
+  let redrawMap = null;   // 취향 칩에서 지도를 다시 그리려면 필요하다
+
+  function computeRanks() {
+    const prefs = prefIds().length ? prefIds() : DEFAULT_PREFS;
+    const list = (seatData.sections || []).filter((sec) =>
+      !sec.side || sec.side === 'neutral' || sec.side === fanSide);
+    ranks = {};
+    window.KboRecommend.rank(list, prefs, 3).forEach((r, i) => {
+      ranks[r.section.section] = i + 1;
+    });
+    return prefs;
+  }
+
   const SIDE_KEY = 'kbo:fanSide';
   let fanSide = 'home';
   const SIDE_LABEL = { home: '홈 응원석', away: '원정 응원석', neutral: '' };
@@ -49,11 +66,15 @@
     };
 
     let html = '<h2>' + R.esc(zone.name) + '</h2><p>';
+    const myRank = ranks[zone.id];
     const side = (section && section.side) || zone.side || 'neutral';
     const mine = side === 'neutral' || side === fanSide;
-    if (section && section.myeongdang && mine) {
+    if (myRank) {
+      html += '<span class="badge badge-my">' + ['🥇', '🥈', '🥉'][myRank - 1] +
+        ' 명당 ' + myRank + '위</span> ';
+    } else if (section && section.myeongdang && mine) {
       const forWhat = (section.myeongdangFor || []).map((k) => MY_LABEL[k]).filter(Boolean).join('·');
-      html += '<span class="badge badge-my">🏅 명당' + (forWhat ? ' · ' + R.esc(forWhat) : '') + '</span> ';
+      html += '<span class="badge">🏅 ' + R.esc(forWhat || '추천') + ' 자리</span> ';
     }
     if (SIDE_LABEL[side]) {
       html += '<span class="badge ' + (mine ? 'badge-ok' : 'badge-bad') + '">' +
@@ -162,15 +183,18 @@
       .filter(Boolean);
 
     let html = '<h2>🎯 나에게 맞는 자리</h2>';
-    if (!prefs.length) {
-      html += R.emptyBox('홈에서 무엇이 중요한지 먼저 골라주세요.') +
-        '<p><a class="btn btn-block" href="./">홈으로</a></p>';
-      openSheet(html);
-      return;
-    }
-    html += '<p class="meta">' + R.esc(labels.join(' · ')) + ' 기준</p>';
+    html += '<p style="margin:0 0 10px;color:var(--dim);font-size:14.5px">' +
+      '무엇이 가장 중요하세요? 고르면 지도의 1·2·3위가 바뀝니다.</p>';
+    html += '<div class="chips" id="rec-prefs">' + window.KboRecommend.PREFS.map((p) =>
+      '<button class="chip" type="button" data-pick="' + p.id + '" aria-pressed="' +
+      (prefs.includes(p.id) ? 'true' : 'false') + '">' + p.emoji + ' ' + R.esc(p.label) +
+      '</button>').join('') + '</div>';
+    html += '<p class="meta">' + R.esc(labels.length ? labels.join(' · ') + ' 기준' : '종합 기준') + '</p>';
 
-    const ranked = window.KboRecommend.rank(seatData.sections, prefs);
+    const use = prefs.length ? prefs : DEFAULT_PREFS;
+    const pool = (seatData.sections || []).filter((sec) =>
+      !sec.side || sec.side === 'neutral' || sec.side === fanSide);
+    const ranked = window.KboRecommend.rank(pool, use);
     if (!ranked.length) {
       html += R.emptyBox('아직 이 구장에는 점수가 매겨진 구역이 없습니다.');
     } else {
@@ -366,11 +390,23 @@
     try { fanSide = localStorage.getItem(SIDE_KEY) === 'away' ? 'away' : 'home'; } catch (e) {}
 
     function drawMap() {
+      redrawMap = drawMap;
+      computeRanks();
       controller = window.KboSeatMap.render(host, mapData, {
         onZone: openZone,
         onFacility: (f) => openSheet('<h2>' + R.esc(f.name) + '</h2>' +
           '<p>' + R.textOr(f.location) + '</p>')
-      }, { fanSide: fanSide });
+      }, { fanSide: fanSide, ranks: ranks });
+      const basis = prefIds().length
+        ? prefIds().map((id) => (window.KboRecommend.PREFS.find((p) => p.id === id) || {}).label)
+            .filter(Boolean).join(' · ')
+        : '종합';
+      const bar = document.getElementById('rank-bar');
+      bar.innerHTML = '🥇 <b>' + R.esc(basis) + '</b> 기준 명당 1·2·3위 ' +
+        '<button type="button" id="rank-change">바꾸기</button>';
+      bar.hidden = false;
+      document.getElementById('rank-change').addEventListener('click', openRecommend);
+
       const b = document.getElementById('side-btn');
       b.textContent = fanSide === 'away' ? '✈️ 원정 팬' : '🏠 홈 팬';
       b.title = '누르면 ' + (fanSide === 'away' ? '홈' : '원정') + ' 팬 기준으로 바뀝니다';
@@ -410,6 +446,21 @@
       if (!b || !mapData) return;
       const zone = mapData.zones.find((z) => z.id === b.dataset.zoneId);
       if (zone) openZone(zone);
+    });
+
+    /* 취향 칩. 누르면 순위 기준이 바뀌고 지도의 1·2·3위가 즉시 다시 매겨진다.
+       기준은 URL에 남겨서, 그 링크를 받은 친구도 같은 순위를 본다. */
+    body().addEventListener('click', (ev) => {
+      const b = ev.target.closest('[data-pick]');
+      if (!b) return;
+      const picked = prefIds();
+      const i = picked.indexOf(b.dataset.pick);
+      if (i >= 0) picked.splice(i, 1); else picked.push(b.dataset.pick);
+      if (picked.length) q.set('prefs', picked.join(',')); else q.delete('prefs');
+      history.replaceState(null, '', location.pathname + '?' + q.toString());
+      if (redrawMap) redrawMap();
+      openRecommend();
+      window.KboAnalytics.track('seat_recommend', { stadium: stadium.id, prefs: picked.join(',') });
     });
 
     // 시트 안 버튼은 위임으로 한 번만 연결한다.

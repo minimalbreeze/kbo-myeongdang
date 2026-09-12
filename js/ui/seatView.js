@@ -165,12 +165,125 @@
 
     // 하늘
     add(el('rect', { x: 0, y: 0, width: W, height: H, fill: 'url(#' + id + '-sky)' }));
+    for (let i = 0; i < 26; i++) {
+      const sx = ((i * 7919) % 1000) / 1000 * W;
+      const sy = ((i * 104729) % 1000) / 1000 * H * 0.42;
+      add(el('circle', { cx: sx.toFixed(1), cy: sy.toFixed(1),
+        r: (0.6 + (i % 3) * 0.35).toFixed(1), fill: '#fff', opacity: '0.35' }));
+    }
     // 조명 번짐
     add(el('ellipse', { cx: W / 2, cy: H * 0.34, rx: W * 0.7, ry: H * 0.42, fill: 'url(#' + id + '-lights)' }));
 
-    // 외야 담장 너머 관중 실루엣
-    const farT = ring(150, 26, -52, 52), farB = ring(150, 0, -52, 52);
-    add(worldPoly(cam, farT.concat(farB.slice().reverse()), { fill: '#0d1b33', opacity: '0.9' }));
+    /* 바닥 판. 잔디 부채꼴 바깥(파울지역·관중석 앞)이 하늘색으로 비어 보이던 걸 막는다. */
+    (function () {
+      const disc = [];
+      for (let a = -180; a < 180; a += 6) disc.push([210 * Math.sin(rad(a)), -0.02, 210 * Math.cos(rad(a))]);
+      add(worldPoly(cam, disc, { fill: '#14283f' }));
+      // 그라운드 바닥. 잔디 부채꼴 바깥(파울지역)이 남색으로 비면 구장이 아니라 무대처럼 보인다.
+      const floor = [];
+      for (let a = -78; a <= 78; a += 3) floor.push([147 * Math.sin(rad(a)), -0.01, 147 * Math.cos(rad(a))]);
+      for (let a = 78; a >= -78; a -= 3) floor.push([2 * Math.sin(rad(a)), -0.01, 2 * Math.cos(rad(a))]);
+      add(worldPoly(cam, floor, { fill: '#27603f' }));
+    })();
+
+    /* 구장 바깥 — 도시 실루엣.
+       처음엔 중견수 쪽 ±85도에만 세웠더니 외야석에서 홈플레이트를 볼 때
+       화면에 하늘밖에 없었다. 한 바퀴 전부 세우고, 조각마다 따로 그린다
+       (한 덩어리로 그리면 카메라 뒤로 감기는 부분에서 잘라내기가 망가진다). */
+    const noise = (i) => ((Math.sin(i * 12.9898) * 43758.5453) % 1 + 1) % 1;
+    for (let a = -180; a < 180; a += 6) {
+      const h2 = 14 + noise(a) * 26;
+      const R = 235;
+      add(worldPoly(cam, [
+        [R * Math.sin(rad(a)), 0, R * Math.cos(rad(a))],
+        [R * Math.sin(rad(a + 6)), 0, R * Math.cos(rad(a + 6))],
+        [R * Math.sin(rad(a + 6)), h2, R * Math.cos(rad(a + 6))],
+        [R * Math.sin(rad(a)), h2, R * Math.cos(rad(a))]
+      ], { fill: '#0a1424', opacity: '0.92' }));
+      // 창문 몇 개. 멀리서도 "도시"로 읽히게 하는 최소한의 신호다.
+      if (noise(a + 1) > 0.55) {
+        const wy = 6 + noise(a + 2) * (h2 - 10);
+        add(worldPoly(cam, [
+          [R * Math.sin(rad(a + 2)), wy, R * Math.cos(rad(a + 2))],
+          [R * Math.sin(rad(a + 4)), wy, R * Math.cos(rad(a + 4))],
+          [R * Math.sin(rad(a + 4)), wy + 3, R * Math.cos(rad(a + 4))],
+          [R * Math.sin(rad(a + 2)), wy + 3, R * Math.cos(rad(a + 2))]
+        ], { fill: '#f2c14e', opacity: '0.25' }));
+      }
+    }
+
+    /* 관중석. 구장을 빙 둘러 세우고 그 위에 관중을 점으로 흩뿌린다.
+       이게 없으면 그라운드만 떠 있어서 경기장으로 안 보인다. */
+    for (let a = -180; a < 180; a += 6) {
+      const s0 = Math.sin(rad(a)), c0 = Math.cos(rad(a));
+      const s1 = Math.sin(rad(a + 6)), c1 = Math.cos(rad(a + 6));
+      // 뒤로 갈수록 높아지는 스탠드 단면
+      add(worldPoly(cam, [
+        [145 * s0, 3, 145 * c0], [145 * s1, 3, 145 * c1],
+        [188 * s1, 32, 188 * c1], [188 * s0, 32, 188 * c0]
+      ], { fill: '#1a3054' }));
+      // 지붕
+      add(worldPoly(cam, [
+        [176 * s0, 40, 176 * c0], [176 * s1, 40, 176 * c1],
+        [196 * s1, 44, 196 * c1], [196 * s0, 44, 196 * c0]
+      ], { fill: '#1b3358' }));
+      add(worldLine(cam, [176 * s0, 40, 176 * c0], [176 * s1, 40, 176 * c1],
+        { stroke: '#3b5a80', 'stroke-width': '1.2', opacity: '0.8' }));
+    }
+    for (let a = -180; a < 180; a += 3) {
+      for (let t = 0; t < 8; t++) {
+        const rr = 146.5 + t * 5.4, hh = 3.5 + t * 3.6;
+        const p = cam.toCam([rr * Math.sin(rad(a)), hh, rr * Math.cos(rad(a))]);
+        if (p[2] <= NEAR) continue;
+        const sp = cam.toScreen(p);
+        add(el('circle', {
+          cx: sp[0].toFixed(1), cy: sp[1].toFixed(1),
+          r: Math.max(0.7, 40 / p[2]).toFixed(1),
+          fill: ['#e8556d', '#f2c14e', '#7fd6a8', '#cdd8ea'][(a + t * 3 + 180) % 4],
+          opacity: '0.6'
+        }));
+      }
+    }
+
+    /* 조명탑 여섯 기. 야구장을 야구장으로 보이게 하는 물건이다.
+       어느 방향을 보든 한두 기는 화면에 들어오도록 한 바퀴에 고루 세운다. */
+    [-150, -95, -40, 40, 95, 150].forEach((a) => {
+      const rr = 196, x = rr * Math.sin(rad(a)), z = rr * Math.cos(rad(a));
+      add(worldLine(cam, [x, 0, z], [x, 66, z],
+        { stroke: '#3c5c82', 'stroke-width': '3.5', 'stroke-linecap': 'round' }));
+      add(worldPoly(cam, [
+        [x - 11, 66, z], [x + 11, 66, z], [x + 11, 78, z], [x - 11, 78, z]
+      ], { fill: '#f4e3ad', opacity: '0.92' }));
+      const glow = cam.toCam([x, 72, z]);
+      if (glow[2] > NEAR) {
+        const g = cam.toScreen(glow);
+        add(el('circle', { cx: g[0].toFixed(1), cy: g[1].toFixed(1),
+          r: Math.max(8, 900 / glow[2]).toFixed(1),
+          fill: 'url(#' + id + '-lights)' }));
+      }
+    });
+
+    /* 전광판 둘. 큰 것은 중견수 뒤, 작은 것은 홈 뒤 위쪽.
+       외야에서 홈을 볼 때도 볼 게 있어야 한다. */
+    [[0, 26, 22, 12], [180, 16, 13, 26]].forEach(function (b) {
+      const a = b[0], hw = b[1], hh = b[2], y0 = b[3];
+      const rr = a === 0 ? 150 : 143;
+      const x = rr * Math.sin(rad(a)), z = rr * Math.cos(rad(a));
+      const ux = Math.cos(rad(a)), uz = -Math.sin(rad(a));   // 판의 가로 방향
+      const P = (u, y, d) => [x + ux * u + Math.sin(rad(a)) * d, y,
+        z + uz * u + Math.cos(rad(a)) * d];
+      add(worldPoly(cam, [P(-hw, y0, 0), P(hw, y0, 0), P(hw, y0 + hh, 0), P(-hw, y0 + hh, 0)],
+        { fill: '#0b1526', stroke: '#3b5a80', 'stroke-width': '1.5' }));
+      add(worldPoly(cam, [P(-hw + 3, y0 + 3, -0.4), P(hw - 3, y0 + 3, -0.4),
+        P(hw - 3, y0 + hh - 3, -0.4), P(-hw + 3, y0 + hh - 3, -0.4)],
+        { fill: '#16324f' }));
+      for (let i = 0; i < 5; i++) {
+        const u0 = -hw + 4 + i * (hw * 2 - 8) / 5;
+        add(worldPoly(cam, [P(u0, y0 + 5, -0.6), P(u0 + (hw * 2 - 8) / 8, y0 + 5, -0.6),
+          P(u0 + (hw * 2 - 8) / 8, y0 + hh - 5, -0.6), P(u0, y0 + hh - 5, -0.6)],
+          { fill: '#f2c14e', opacity: String(0.22 + (i % 3) * 0.16) }));
+      }
+    });
 
     // 잔디
     const grass = [[0, 0, 0]].concat(ring(1, 0, 0, 0));
@@ -296,10 +409,13 @@
         cx: head[0].toFixed(1), cy: head[1].toFixed(1), r: Math.max(2.0, h * 0.20).toFixed(1),
         fill: body
       }));
-      if (h > 13) {
+      // 포지션 이름은 큼직하게 보이는 선수에게만. 홈플레이트 근처는 타자·포수·심판이
+      // 몰려 있어서 전부 쓰면 글자끼리 겹친다. 어두운 테두리를 둘러 잔디 위에서도 읽히게 한다.
+      if (h > 17) {
         const t = el('text', {
-          x: head[0].toFixed(1), y: (head[1] - h * 0.30).toFixed(1), 'text-anchor': 'middle',
-          fill: '#dbe5f5', 'font-size': Math.max(9, Math.min(13, h * 0.32)).toFixed(1),
+          x: head[0].toFixed(1), y: (head[1] - h * 0.34).toFixed(1), 'text-anchor': 'middle',
+          fill: '#eaf1fb', 'font-size': Math.max(9, Math.min(13, h * 0.30)).toFixed(1),
+          stroke: '#0b1526', 'stroke-width': '2.6', 'paint-order': 'stroke',
           'pointer-events': 'none'
         });
         t.textContent = pl.name;
