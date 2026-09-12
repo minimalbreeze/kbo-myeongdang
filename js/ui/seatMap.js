@@ -151,7 +151,15 @@
     unplaced:     { fill: '#5d6a85', op: 0.32, dash: '4 5' }
   };
 
-  function drawZones(g, map, onPick) {
+  /* 명당은 응원하는 쪽에 따라 다르다. 광주는 3루가 홈이라, 원정 팬에게
+     3루 응원석은 명당이 아니라 피해야 할 자리다. */
+  function isMyeongdang(z, fanSide) {
+    if (!z.myeongdang) return false;
+    if (!z.side || z.side === 'neutral') return true;
+    return z.side === fanSide;
+  }
+
+  function drawZones(g, map, onPick, fanSide) {
     const { x: cx, y: cy } = map.home;
     map.zones.forEach((z) => {
       const st = STYLE[z.verified ? 'verified' : (z.confidence || 'unplaced')] || STYLE.unplaced;
@@ -160,7 +168,8 @@
         fill: st.fill, 'fill-opacity': st.op,
         stroke: '#ffffff', 'stroke-width': '2', 'stroke-dasharray': st.dash,
         'data-zone': z.id, tabindex: '0', role: 'button',
-        'aria-label': z.name + (z.verified ? ' (확인됨)' : ' (확인 중)'),
+        'aria-label': z.name + (z.verified ? ' (확인됨)' : ' (확인 중)') +
+          (z.side === 'home' ? ' 홈 응원석' : z.side === 'away' ? ' 원정 응원석' : ''),
         style: 'cursor:pointer'
       });
       const pick = (ev) => { ev.preventDefault(); ev.stopPropagation(); onPick(z); };
@@ -186,7 +195,7 @@
 
       // 명당은 배지가 아니라 핀으로 세운다. 불꽃축제 지도에서 명당이 핀으로
       // 꽂혀 있듯이, 이 화면에서도 "여기다" 하고 가리키는 것이 있어야 한다.
-      if (z.myeongdang) {
+      if (isMyeongdang(z, fanSide)) {
         // 글자 폭을 재지 않고도 겹치지 않게, 라벨 길이에서 대략의 폭을 잡아
         // 그 왼쪽에 세운다. 위에 두면 바로 윗 띠와 겹친다.
         const label = z.mapLabel || z.name;
@@ -307,7 +316,7 @@
     return { reset() { view.x = box[0]; view.y = box[1]; view.w = box[2]; view.h = box[3]; apply(); } };
   }
 
-  function render(container, map, handlers) {
+  function render(container, map, handlers, opts) {
     container.innerHTML = '';
     const box = map.viewBox.split(/\s+/).map(Number);
     const svg = el('svg', {
@@ -319,7 +328,7 @@
     const gField = el('g', {}), gRing = el('g', {}), gZones = el('g', {}), gFac = el('g', {});
     drawField(gField, map);
     drawRings(gRing, map);
-    drawZones(gZones, map, handlers.onZone);
+    drawZones(gZones, map, handlers.onZone, opts && opts.fanSide);
     drawFacilities(gFac, map, handlers.onFacility || function () {});
     svg.appendChild(gField); svg.appendChild(gRing);
     svg.appendChild(gZones); svg.appendChild(gFac);
@@ -327,5 +336,5 @@
     return wirePanZoom(svg, box);
   }
 
-  window.KboSeatMap = { render, STYLE };
+  window.KboSeatMap = { render, STYLE, isMyeongdang };
 })();

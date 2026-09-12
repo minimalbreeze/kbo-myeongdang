@@ -11,7 +11,7 @@
      - 아이콘·이미지만 cache-first다. 거의 안 바뀌고, 바뀔 때는 파일명을 올리는
        것이 이 저장소의 규칙이라(og-image-v2.png) 옛 주소가 굳어도 문제가 없다. */
 
-const VERSION = 'v1';
+const VERSION = 'v2';
 const SHELL = 'kbo-shell-' + VERSION;
 const RUNTIME = 'kbo-runtime-' + VERSION;
 
@@ -45,6 +45,7 @@ const PRECACHE = [
   'data/shops.json',
   'data/facilities.json',
   'data/transport.json',
+  'data/events.json',
   'data/map/gwangju.json'
 ];
 

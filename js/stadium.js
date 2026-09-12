@@ -9,6 +9,12 @@
   let stadium = null, mapData = null, seatData = { sections: [], seatTypes: [] }, controller = null;
   let openedZone = null;   // 시트가 지금 보여주는 구역 (버튼 위임에서 쓴다)
 
+  /* 응원하는 쪽. 광주는 3루가 홈(KIA), 1루가 원정이다. 구장마다 다르므로
+     데이터의 side를 보고 판단한다. 원정 팬에게 홈 응원석은 명당이 아니다. */
+  const SIDE_KEY = 'kbo:fanSide';
+  let fanSide = 'home';
+  const SIDE_LABEL = { home: '홈 응원석', away: '원정 응원석', neutral: '' };
+
   const sheet = () => document.getElementById('sheet');
   const body = () => document.getElementById('sheet-body');
 
@@ -43,9 +49,16 @@
     };
 
     let html = '<h2>' + R.esc(zone.name) + '</h2><p>';
-    if (section && section.myeongdang) {
+    const side = (section && section.side) || zone.side || 'neutral';
+    const mine = side === 'neutral' || side === fanSide;
+    if (section && section.myeongdang && mine) {
       const forWhat = (section.myeongdangFor || []).map((k) => MY_LABEL[k]).filter(Boolean).join('·');
       html += '<span class="badge badge-my">🏅 명당' + (forWhat ? ' · ' + R.esc(forWhat) : '') + '</span> ';
+    }
+    if (SIDE_LABEL[side]) {
+      html += '<span class="badge ' + (mine ? 'badge-ok' : 'badge-bad') + '">' +
+        (side === 'home' ? '🏠 ' : '✈️ ') + R.esc(SIDE_LABEL[side]) +
+        (mine ? '' : ' · 상대 쪽') + '</span> ';
     }
     html += '<span class="badge ' + c.cls + '">' + R.esc(c.badge) + '</span></p>';
 
@@ -273,6 +286,16 @@
       }
     });
 
+    // 이벤트 존
+    const evs = await safe(() => window.KboData.events(stadium.id));
+    html += '<h3 style="margin-top:18px">🎪 이벤트 존</h3>';
+    html += (evs && evs.length)
+      ? evs.map((e) => '<div class="place"><div class="place-top"><b>' + R.textOr(e.name) + '</b>' +
+          '<span class="place-where">' + R.textOr(e.location) + '</span></div>' +
+          (e.description ? '<p class="place-desc">' + R.esc(e.description) + '</p>' : '') +
+          '</div>').join('') + '<p class="meta">행사는 시즌·경기마다 바뀝니다.</p>'
+      : R.emptyBox('이벤트 존 정보 준비 중');
+
     // 교통
     const t = await safe(() => window.KboData.transport(stadium.id));
     html += '<h3 style="margin-top:18px">🚇 교통</h3>';
@@ -340,11 +363,26 @@
     mapData = await safe(() => window.KboData.load('map/' + stadium.id + '.json'));
 
     const host = document.getElementById('seat-map');
-    if (mapData) {
+    try { fanSide = localStorage.getItem(SIDE_KEY) === 'away' ? 'away' : 'home'; } catch (e) {}
+
+    function drawMap() {
       controller = window.KboSeatMap.render(host, mapData, {
         onZone: openZone,
         onFacility: (f) => openSheet('<h2>' + R.esc(f.name) + '</h2>' +
           '<p>' + R.textOr(f.location) + '</p>')
+      }, { fanSide: fanSide });
+      const b = document.getElementById('side-btn');
+      b.textContent = fanSide === 'away' ? '✈️ 원정 팬' : '🏠 홈 팬';
+      b.title = '누르면 ' + (fanSide === 'away' ? '홈' : '원정') + ' 팬 기준으로 바뀝니다';
+    }
+
+    if (mapData) {
+      drawMap();
+      document.getElementById('side-btn').addEventListener('click', () => {
+        fanSide = fanSide === 'away' ? 'home' : 'away';
+        try { localStorage.setItem(SIDE_KEY, fanSide); } catch (e) {}
+        drawMap();
+        window.KboShare.toast(fanSide === 'away' ? '원정 팬 기준으로 봅니다 ✈️' : '홈 팬 기준으로 봅니다 🏠');
       });
       // 개략도라는 사실은 범례 안에 둔다 — 화면 위에 떠다니는 글이 하나 줄고,
       // 신뢰도 설명과 같은 자리에 있어야 뜻이 통한다.

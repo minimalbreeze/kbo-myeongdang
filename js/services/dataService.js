@@ -49,6 +49,7 @@
     shops:      (id) => byStadium('shops.json', id),
     facilities: (id) => byStadium('facilities.json', id),
     transport:  (id) => byStadium('transport.json', id),
+    events:     (id) => byStadium('events.json', id),
     games:      () => load('games.json')
   };
 })();

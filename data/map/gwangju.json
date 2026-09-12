@@ -23,7 +23,8 @@
       "verified": false,
       "confidence": "corroborated",
       "why": "홈플레이트 바로 뒤 프리미엄석으로 복수 출처에서 설명됨",
-      "myeongdang": true
+      "myeongdang": true,
+      "side": "neutral"
     },
     {
       "id": "k9",
@@ -35,7 +36,8 @@
       "verified": false,
       "confidence": "corroborated",
       "why": "홈플레이트 뒤편 구역으로 복수 출처에서 설명됨. 1루측에도 K9존(112블록)이 있어 좌우로 넓게 잡았다.",
-      "myeongdang": true
+      "myeongdang": true,
+      "side": "neutral"
     },
     {
       "id": "table",
@@ -47,7 +49,8 @@
       "verified": false,
       "confidence": "unplaced",
       "why": "등급 존재만 확인. 위치는 공식 좌석도 확인 필요",
-      "myeongdang": true
+      "myeongdang": true,
+      "side": "neutral"
     },
     {
       "id": "k8-3b",
@@ -60,7 +63,8 @@
       "confidence": "corroborated",
       "why": "3루측 K8존이 응원 명당으로 복수 출처에서 공통 언급(120~122블록 인근).",
       "mapLabel": "K8석",
-      "myeongdang": true
+      "myeongdang": true,
+      "side": "home"
     },
     {
       "id": "k8-1b",
@@ -72,8 +76,9 @@
       "r1": 252,
       "verified": false,
       "confidence": "corroborated",
-      "myeongdang": false,
-      "why": "1루측에도 K8존이 있다(109·110블록 등). 3루측만 그려두었던 것을 바로잡았다."
+      "myeongdang": true,
+      "why": "1루측 K8존. 이 구장에서는 원정팬 응원석 쪽이다.",
+      "side": "away"
     },
     {
       "id": "k5",
@@ -85,7 +90,8 @@
       "verified": false,
       "confidence": "unplaced",
       "why": "가성비 자리로는 공통 언급되지만 구장 어느 쪽인지는 확인되지 않았다.",
-      "myeongdang": true
+      "myeongdang": true,
+      "side": "home"
     },
     {
       "id": "ev-3b",
@@ -96,7 +102,8 @@
       "r1": 292,
       "verified": false,
       "confidence": "unplaced",
-      "why": "등급 존재만 확인. 위치 미확인"
+      "why": "등급 존재만 확인. 위치 미확인",
+      "side": "home"
     },
     {
       "id": "ev-1b",
@@ -107,7 +114,8 @@
       "r1": 292,
       "verified": false,
       "confidence": "unplaced",
-      "why": "등급 존재만 확인. 위치 미확인"
+      "why": "등급 존재만 확인. 위치 미확인",
+      "side": "away"
     },
     {
       "id": "outfield",
@@ -119,10 +127,12 @@
       "verified": false,
       "confidence": "corroborated",
       "why": "외야는 지정좌석 없는 자유석으로 복수 출처에서 설명됨",
-      "myeongdang": true
+      "myeongdang": true,
+      "side": "neutral"
     }
   ],
   "facilities": [],
   "facilitiesNote": "화장실·매점·굿즈샵 핀은 실제 위치가 확인된 뒤에만 올립니다. 추정 위치를 찍지 않습니다.",
-  "mapLabelNote": "mapLabel이 있으면 지도 위에는 그 글자를 쓴다(띠를 넘치는 긴 이름용)."
+  "mapLabelNote": "mapLabel이 있으면 지도 위에는 그 글자를 쓴다(띠를 넘치는 긴 이름용).",
+  "sideNote": "side: home = 홈(KIA) 응원석 쪽, away = 원정 응원석 쪽, neutral = 어느 쪽도 아님. 광주는 3루가 홈이다."
 }

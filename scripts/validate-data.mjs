@@ -159,6 +159,9 @@ async function main() {
       if (!sec.section) err('seats.json', `${at}: section이 없습니다.`);
       else if (sectionIds.has(sec.section)) err('seats.json', `${at}: section이 중복됩니다.`);
       sectionIds.add(sec.section);
+      if (sec.side != null && !['home', 'away', 'neutral'].includes(sec.side)) {
+        err('seats.json', `${at}: side는 home / away / neutral 중 하나여야 합니다 (${sec.side}).`);
+      }
       for (const k of scoreKeys) checkScore('seats.json', at, k, sec[k]);
       checkPrice('seats.json', at, sec.price);
       checkUrl('seats.json', at, 'viewImage', sec.viewImage);
@@ -209,6 +212,23 @@ async function main() {
     }
   }
 
+  // ---------- 이벤트 존 ----------
+  const events = await readJson('events.json');
+  if (events) {
+    for (const [sid, list] of Object.entries(events.stadiums || {})) {
+      refStadium('events.json', `events.stadiums.${sid}`, sid);
+      (list || []).forEach((e, i) => {
+        const at = `events.${sid}[${i}]`;
+        if (!e.name) err('events.json', `${at}: name이 없습니다.`);
+        if (!e.eventId) err('events.json', `${at}: eventId가 없습니다.`);
+        checkUpdatedAt('events.json', at, e.updatedAt);
+        for (const src of e.sources || []) {
+          if (src.url != null && !isHttps(src.url)) err('events.json', `${at}: sources.url이 https가 아닙니다.`);
+        }
+      });
+    }
+  }
+
   const transport = await readJson('transport.json');
   if (transport) {
     for (const [sid, t] of Object.entries(transport.stadiums || {})) {
@@ -247,6 +267,9 @@ async function main() {
       if (typeof z.a1 === 'number' && (z.a1 < 0 || z.a1 > 360)) err(rel, `${at}: a1은 0~360이어야 합니다.`);
       if (typeof z.r0 === 'number' && typeof z.r1 === 'number' && z.r0 >= z.r1) {
         err(rel, `${at}: r0(${z.r0})가 r1(${z.r1})보다 작아야 합니다.`);
+      }
+      if (z.side != null && !['home', 'away', 'neutral'].includes(z.side)) {
+        err(rel, `${at}: side는 home / away / neutral 중 하나여야 합니다 (${z.side}).`);
       }
       const okConf = ['verified', 'corroborated', 'unplaced'];
       if (z.confidence != null && !okConf.includes(z.confidence)) {

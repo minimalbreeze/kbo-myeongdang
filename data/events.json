@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "note": "구장 안의 포토존·체험존 같은 이벤트 공간. 위치가 확인된 것만 넣습니다. 행사는 시즌·경기마다 바뀝니다.",
+  "stadiums": {
+    "gwangju": [
+      {
+        "eventId": "ev-space",
+        "name": "EV 스페이스존",
+        "location": "6출입구 근처",
+        "gate": "6번 출입구",
+        "type": "체험",
+        "description": "6출입구[E] 근처에 설치되어 있다는 설명이 복수 출처에 있다.",
+        "verified": false,
+        "confidence": "corroborated",
+        "sources": [
+          {
+            "name": "나무위키 — 광주-기아 챔피언스 필드",
+            "url": "https://namu.wiki/w/%EA%B4%91%EC%A3%BC-%EA%B8%B0%EC%95%84%20%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4%20%ED%95%84%EB%93%9C"
+          }
+        ],
+        "updatedAt": "2026-09-12"
+      },
+      {
+        "eventId": "champil-4cut",
+        "name": "챔필네컷 부스",
+        "location": "6출입구 근처",
+        "gate": "6번 출입구",
+        "type": "포토",
+        "description": "부스 2기가 6출입구 근처에 있다는 설명이 복수 출처에 있다.",
+        "verified": false,
+        "confidence": "corroborated",
+        "sources": [
+          {
+            "name": "나무위키 — 광주-기아 챔피언스 필드",
+            "url": "https://namu.wiki/w/%EA%B4%91%EC%A3%BC-%EA%B8%B0%EC%95%84%20%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4%20%ED%95%84%EB%93%9C"
+          }
+        ],
+        "updatedAt": "2026-09-12"
+      }
+    ]
+  }
+}
