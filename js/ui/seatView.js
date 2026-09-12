@@ -132,97 +132,174 @@
     }, attrs));
   }
 
-  /* ---------- 그리기 ---------- */
-  function draw(svg, seat, yaw, pitch, W, H) {
+  /* ---------- 그리기 ----------
+     사진을 쓸 수 없으니(남의 사진은 저작권이 있다) 계산해서 그린다.
+     대신 도형만 덩그러니 두지 않고, 잔디 결·워닝트랙·담장 패드·파울폴·
+     관중 실루엣까지 넣어 실제 구장처럼 보이게 한다.
+     그래도 사진이 아니라는 사실은 화면에 그대로 적는다. */
+
+  function defs(svg, id) {
+    const d = el('defs', {});
+    const sky = el('linearGradient', { id: id + '-sky', x1: '0', y1: '0', x2: '0', y2: '1' });
+    [['0%', '#0a1730'], ['55%', '#14284a'], ['100%', '#1d3a63']].forEach(([o, c]) =>
+      sky.appendChild(el('stop', { offset: o, 'stop-color': c })));
+    d.appendChild(sky);
+
+    const glow = el('radialGradient', { id: id + '-lights' });
+    [['0%', '#ffe9b0', '0.30'], ['100%', '#ffe9b0', '0']].forEach(([o, c, op]) =>
+      glow.appendChild(el('stop', { offset: o, 'stop-color': c, 'stop-opacity': op })));
+    d.appendChild(glow);
+    svg.appendChild(d);
+  }
+
+  function draw(svg, seat, yaw, pitch, W, H, id) {
     svg.innerHTML = '';
+    defs(svg, id);
     const cam = makeCamera(seat, yaw, pitch, W, H);
     const add = (n) => { if (n) svg.appendChild(n); };
+    const ring = (r, y, from, to, step) => {
+      const out = [];
+      for (let a = from; a <= to; a += (step || 2)) out.push([r * Math.sin(rad(a)), y, r * Math.cos(rad(a))]);
+      return out;
+    };
 
-    add(el('rect', { x: 0, y: 0, width: W, height: H, fill: '#0b1526' }));
+    // 하늘
+    add(el('rect', { x: 0, y: 0, width: W, height: H, fill: 'url(#' + id + '-sky)' }));
+    // 조명 번짐
+    add(el('ellipse', { cx: W / 2, cy: H * 0.34, rx: W * 0.7, ry: H * 0.42, fill: 'url(#' + id + '-lights)' }));
 
-    // 외야 잔디 — 홈에서 담장까지 파울라인 안쪽
-    const grass = [[0, 0, 0]];
+    // 외야 담장 너머 관중 실루엣
+    const farT = ring(150, 26, -52, 52), farB = ring(150, 0, -52, 52);
+    add(worldPoly(cam, farT.concat(farB.slice().reverse()), { fill: '#0d1b33', opacity: '0.9' }));
+
+    // 잔디
+    const grass = [[0, 0, 0]].concat(ring(1, 0, 0, 0));
+    grass.length = 1;
     for (let a = -45; a <= 45; a += 2) {
-      const d = wallAt(a);
-      grass.push([d * Math.sin(rad(a)), 0, d * Math.cos(rad(a))]);
+      const d2 = wallAt(a);
+      grass.push([d2 * Math.sin(rad(a)), 0, d2 * Math.cos(rad(a))]);
     }
-    add(worldPoly(cam, grass, { fill: '#2f7d4f', opacity: '0.62' }));
+    add(worldPoly(cam, grass, { fill: '#2e7a4d' }));
+
+    /* 잔디 결. 실제 구장은 잔디깎이 방향 때문에 줄무늬가 진다.
+       이 한 가지로 "도형"이 "그라운드"로 보인다. */
+    for (let a = -45; a < 45; a += 10) {
+      const b = Math.min(45, a + 5);
+      const band = [[0, 0.005, 0]];
+      for (let t = a; t <= b; t += 1) {
+        const d2 = wallAt(t);
+        band.push([d2 * Math.sin(rad(t)), 0.005, d2 * Math.cos(rad(t))]);
+      }
+      add(worldPoly(cam, band, { fill: '#ffffff', opacity: '0.055' }));
+    }
+
+    // 워닝트랙 — 담장 앞 흙띠
+    const wtOut = [], wtIn = [];
+    for (let a = -45; a <= 45; a += 2) {
+      const d2 = wallAt(a);
+      wtOut.push([d2 * Math.sin(rad(a)), 0.01, d2 * Math.cos(rad(a))]);
+      wtIn.push([(d2 - 5) * Math.sin(rad(a)), 0.01, (d2 - 5) * Math.cos(rad(a))]);
+    }
+    add(worldPoly(cam, wtOut.concat(wtIn.slice().reverse()), { fill: '#a97b51', opacity: '0.85' }));
 
     // 내야 흙
-    const dirt = [[0, 0.01, -3]];
-    for (let a = -52; a <= 52; a += 3) dirt.push([29 * Math.sin(rad(a)), 0.01, 29 * Math.cos(rad(a))]);
-    add(worldPoly(cam, dirt, { fill: '#b98a5a', opacity: '0.78' }));
+    const dirt = [[0, 0.02, -3]].concat(ring(29, 0.02, -52, 52, 3));
+    add(worldPoly(cam, dirt, { fill: '#b98a5a' }));
+
+    /* 내야 잔디. 베이스 사이 다이아몬드 안쪽이 잔디이고 루와 루를 잇는 길만 흙이다.
+       처음에는 부채꼴로 그렸더니 엉뚱한 덩어리가 됐다. */
+    const inset = 4.2;
+    add(worldPoly(cam, [
+      [0, 0.03, inset * 1.5],
+      [D - inset, 0.03, D + inset * 0.2],
+      [0, 0.03, D * 2 - inset * 1.2],
+      [-(D - inset), 0.03, D + inset * 0.2]
+    ], { fill: '#2e7a4d' }));
 
     // 파울 라인
     [-45, 45].forEach((a) => {
-      const d = WALL.corner;
-      add(worldLine(cam, [0, 0.03, 0], [d * Math.sin(rad(a)), 0.03, d * Math.cos(rad(a))],
-        { stroke: '#fff', 'stroke-width': '2', opacity: '0.8' }));
+      const d2 = WALL.corner;
+      add(worldLine(cam, [0, 0.05, 0], [d2 * Math.sin(rad(a)), 0.05, d2 * Math.cos(rad(a))],
+        { stroke: '#fff', 'stroke-width': '2', opacity: '0.85' }));
     });
 
     // 베이스
     Object.keys(BASES).forEach((k) => {
-      const [bx, bz] = BASES[k], s = 0.65;
+      const [bx, bz] = BASES[k], sz = 0.65;
       add(worldPoly(cam, [
-        [bx - s, 0.05, bz - s], [bx + s, 0.05, bz - s], [bx + s, 0.05, bz + s], [bx - s, 0.05, bz + s]
-      ], { fill: '#fff', opacity: '0.95' }));
+        [bx - sz, 0.07, bz - sz], [bx + sz, 0.07, bz - sz], [bx + sz, 0.07, bz + sz], [bx - sz, 0.07, bz + sz]
+      ], { fill: '#fff' }));
     });
 
     // 마운드
     const mound = [];
-    for (let a = 0; a < 360; a += 12) mound.push([2.7 * Math.cos(rad(a)), 0.06, MOUND + 2.7 * Math.sin(rad(a))]);
-    add(worldPoly(cam, mound, { fill: '#c99a6a', opacity: '0.92' }));
+    for (let a = 0; a < 360; a += 12) mound.push([2.7 * Math.cos(rad(a)), 0.08, MOUND + 2.7 * Math.sin(rad(a))]);
+    add(worldPoly(cam, mound, { fill: '#c99a6a' }));
 
-    // 외야 담장
-    const top = [], bot = [];
+    // 외야 담장 + 위쪽 노란 선
+    const wt = [], wb = [];
     for (let a = -45; a <= 45; a += 2) {
-      const d = wallAt(a);
-      bot.push([d * Math.sin(rad(a)), 0, d * Math.cos(rad(a))]);
-      top.push([d * Math.sin(rad(a)), 2.4, d * Math.cos(rad(a))]);
+      const d2 = wallAt(a);
+      wb.push([d2 * Math.sin(rad(a)), 0, d2 * Math.cos(rad(a))]);
+      wt.push([d2 * Math.sin(rad(a)), 2.6, d2 * Math.cos(rad(a))]);
     }
-    add(worldPoly(cam, top.concat(bot.slice().reverse()), { fill: '#16324d', opacity: '0.95' }));
+    add(worldPoly(cam, wt.concat(wb.slice().reverse()), { fill: '#14324f' }));
+    for (let i = 0; i < wt.length - 1; i++) {
+      add(worldLine(cam, wt[i], wt[i + 1], { stroke: '#f2c14e', 'stroke-width': '1.6', opacity: '0.8' }));
+    }
+
+    // 파울폴
+    [-45, 45].forEach((a) => {
+      const d2 = WALL.corner;
+      const x = d2 * Math.sin(rad(a)), z = d2 * Math.cos(rad(a));
+      add(worldLine(cam, [x, 0, z], [x, 14, z], { stroke: '#f2c14e', 'stroke-width': '3', opacity: '0.9' }));
+    });
 
     /* 홈플레이트 뒤 백스톱. 내가 앉은 쪽은 그리지 않는다 — 그 뒤에 앉아 있으니
-       실제로 안 보이고, 그리면 화면을 통째로 가린다(챔피언석에서 그라운드가
-       사라졌었다). 시선 반대편만 그린다. */
+       실제로 안 보이고, 그리면 화면을 통째로 가린다. */
     const seg = [];
     const away = (a) => Math.abs(((a - seat.bearing + 540) % 360) - 180) > 105;
-    for (let a = 116; a <= 244; a += 4) {
-      if (away(a)) seg.push(a); else { flush(); }
-    }
+    for (let a = 116; a <= 244; a += 4) { if (away(a)) seg.push(a); else flush(); }
     flush();
     function flush() {
       if (seg.length < 2) { seg.length = 0; return; }
       const t = seg.map((a) => [16 * Math.sin(rad(a)), 4, 16 * Math.cos(rad(a))]);
       const b = seg.map((a) => [16 * Math.sin(rad(a)), 0, 16 * Math.cos(rad(a))]);
-      add(worldPoly(cam, t.concat(b.reverse()), { fill: '#16243d', opacity: '0.95' }));
+      add(worldPoly(cam, t.concat(b.reverse()), { fill: '#132743', opacity: '0.95' }));
       seg.length = 0;
     }
 
-    /* 선수. 먼 쪽부터 그려야 가까운 선수가 위에 온다. */
+    /* 선수. 먼 쪽부터 그려야 가까운 선수가 위에 온다.
+       발밑에 그림자를 깔면 땅에 서 있는 것으로 읽힌다. */
     PLAYERS.map((pl) => {
       const foot = cam.toCam([pl.pos[0], 0, pl.pos[1]]);
-      const head = cam.toCam([pl.pos[0], 1.75, pl.pos[1]]);
+      const head = cam.toCam([pl.pos[0], 1.78, pl.pos[1]]);
       if (foot[2] <= NEAR || head[2] <= NEAR) return null;
       return { pl, foot: cam.toScreen(foot), head: cam.toScreen(head), depth: foot[2] };
     }).filter(Boolean).sort((a, b) => b.depth - a.depth).forEach(({ pl, foot, head }) => {
       const h = Math.abs(foot[1] - head[1]);
       if (h < 2.5) return;
-      const col = pl.batter ? '#ffd27a' : '#ffffff';
+      const body = pl.batter ? '#ffd27a' : '#f2f6fc';
+      const w = Math.max(2.2, h * 0.24);
+
+      add(el('ellipse', {
+        cx: foot[0].toFixed(1), cy: foot[1].toFixed(1),
+        rx: (w * 1.5).toFixed(1), ry: (w * 0.5).toFixed(1),
+        fill: '#000', opacity: '0.3'
+      }));
       add(el('line', {
         x1: foot[0].toFixed(1), y1: foot[1].toFixed(1),
-        x2: head[0].toFixed(1), y2: (head[1] + h * 0.32).toFixed(1),
-        stroke: col, 'stroke-width': Math.max(2.2, h * 0.26).toFixed(1),
-        'stroke-linecap': 'round', opacity: '0.95'
+        x2: head[0].toFixed(1), y2: (head[1] + h * 0.30).toFixed(1),
+        stroke: body, 'stroke-width': w.toFixed(1), 'stroke-linecap': 'round'
       }));
       add(el('circle', {
-        cx: head[0].toFixed(1), cy: head[1].toFixed(1), r: Math.max(2.0, h * 0.22).toFixed(1),
-        fill: col, opacity: '0.95'
+        cx: head[0].toFixed(1), cy: head[1].toFixed(1), r: Math.max(2.0, h * 0.20).toFixed(1),
+        fill: body
       }));
       if (h > 13) {
         const t = el('text', {
-          x: head[0].toFixed(1), y: (head[1] - h * 0.28).toFixed(1), 'text-anchor': 'middle',
-          fill: '#e6edf8', 'font-size': Math.max(9, Math.min(13, h * 0.34)).toFixed(1),
+          x: head[0].toFixed(1), y: (head[1] - h * 0.30).toFixed(1), 'text-anchor': 'middle',
+          fill: '#dbe5f5', 'font-size': Math.max(9, Math.min(13, h * 0.32)).toFixed(1),
           'pointer-events': 'none'
         });
         t.textContent = pl.name;
@@ -236,6 +313,8 @@
     const W = (opts && opts.width) || container.clientWidth || 320;
     const H = (opts && opts.height) || Math.round(W * 0.62);
     const seat = seatFromZone(zone);
+    // 한 화면에 여러 개를 띄워도 그라디언트 id가 겹치지 않게 한다.
+    const id = 'sv' + Math.random().toString(36).slice(2, 8);
     let yaw = 0, pitch = 0;
 
     container.innerHTML = '';
@@ -246,7 +325,7 @@
     });
     container.appendChild(svg);
 
-    const redraw = () => draw(svg, seat, yaw, pitch, W, H);
+    const redraw = () => draw(svg, seat, yaw, pitch, W, H, id);
     redraw();
 
     let last = null;
