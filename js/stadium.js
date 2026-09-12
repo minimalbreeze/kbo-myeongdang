@@ -7,8 +7,6 @@
   const q = new URLSearchParams(location.search);
 
   let stadium = null, mapData = null, seatData = { sections: [], seatTypes: [] }, controller = null;
-  const VIEW_KEY = 'kbo:mapView';
-  let viewMode = 'flat';   // flat = 평면도, tilt = 기울여 본 입체
   let openedZone = null;   // 시트가 지금 보여주는 구역 (버튼 위임에서 쓴다)
 
   const sheet = () => document.getElementById('sheet');
@@ -330,25 +328,11 @@
     mapData = await safe(() => window.KboData.load('map/' + stadium.id + '.json'));
 
     const host = document.getElementById('seat-map');
-    try { viewMode = localStorage.getItem(VIEW_KEY) === 'tilt' ? 'tilt' : 'flat'; } catch (e) {}
-
-    function drawMap() {
+    if (mapData) {
       controller = window.KboSeatMap.render(host, mapData, {
         onZone: openZone,
         onFacility: (f) => openSheet('<h2>' + R.esc(f.name) + '</h2>' +
           '<p>' + R.textOr(f.location) + '</p>')
-      }, viewMode);
-      const b = document.getElementById('view-btn');
-      b.textContent = viewMode === 'tilt' ? '🗺️ 평면으로 보기' : '🏟️ 입체로 보기';
-      b.setAttribute('aria-pressed', String(viewMode === 'tilt'));
-    }
-
-    if (mapData) {
-      drawMap();
-      document.getElementById('view-btn').addEventListener('click', () => {
-        viewMode = viewMode === 'tilt' ? 'flat' : 'tilt';
-        try { localStorage.setItem(VIEW_KEY, viewMode); } catch (e) {}
-        drawMap();
       });
       // 개략도라는 사실은 범례 안에 둔다 — 화면 위에 떠다니는 글이 하나 줄고,
       // 신뢰도 설명과 같은 자리에 있어야 뜻이 통한다.

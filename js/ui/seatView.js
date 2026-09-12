@@ -19,40 +19,35 @@
   const rad = (d) => d * Math.PI / 180;
 
   // ---------- 그라운드 (미터, 홈플레이트가 원점, +z가 중견수 방향) ----------
-  const BASE = 27.43;          // 루간 거리
-  const D = BASE / Math.SQRT2; // 1·3루의 x, z 성분
+  const BASE = 27.43;            // 루간 거리
+  const D = BASE / Math.SQRT2;   // 1·3루의 x, z 성분
   const MOUND = 18.44;
-
-  const BASES = {
-    home: [0, 0], first: [D, D], second: [0, BASE * Math.SQRT2 / 2 * 2 * 0.5 + D], third: [-D, D]
-  };
-  BASES.second = [0, D * 2];
+  const BASES = { home: [0, 0], first: [D, D], second: [0, D * 2], third: [-D, D] };
 
   // 표준 수비 위치. 야구의 규격이지 우리가 정한 값이 아니다.
   const PLAYERS = [
-    { id: 'p',  name: '투수',   pos: [0, MOUND] },
-    { id: 'c',  name: '포수',   pos: [0, -1.6] },
-    { id: '1b', name: '1루수',  pos: [21, 30] },
-    { id: '2b', name: '2루수',  pos: [9, 45] },
-    { id: 'ss', name: '유격수', pos: [-9, 45] },
-    { id: '3b', name: '3루수',  pos: [-21, 30] },
-    { id: 'lf', name: '좌익수', pos: [-44, 80] },
-    { id: 'cf', name: '중견수', pos: [0, 92] },
-    { id: 'rf', name: '우익수', pos: [44, 80] },
-    { id: 'bat', name: '타자',  pos: [-1.2, 0.4], batter: true }
+    { name: '투수',   pos: [0, MOUND] },
+    { name: '포수',   pos: [0, -1.6] },
+    { name: '1루수',  pos: [21, 30] },
+    { name: '2루수',  pos: [9, 45] },
+    { name: '유격수', pos: [-9, 45] },
+    { name: '3루수',  pos: [-21, 30] },
+    { name: '좌익수', pos: [-44, 80] },
+    { name: '중견수', pos: [0, 92] },
+    { name: '우익수', pos: [44, 80] },
+    { name: '타자',   pos: [-1.2, 0.4], batter: true }
   ];
 
   const WALL = { corner: 99, center: 121 };   // 개략값. 실측이 생기면 데이터로 뺀다.
+  const wallAt = (a) => WALL.center + (WALL.corner - WALL.center) * (Math.abs(a) / 45);
 
   /* 지도 좌표(각도·반지름)를 좌석의 실제 위치로 옮긴다.
 
      반지름에 그냥 비례를 곱하면 안 된다. 지도는 개략도라 관중석이 필드에 비해
      크게 그려져 있어서, 그대로 환산하면 홈 뒤 자리가 50m 넘게 멀어지고 그라운드가
-     점처럼 작아졌다. 그래서 관중석 반지름 구간(GROUND~바깥)을 실제 좌석 거리
-     구간(백스톱 뒤 18m ~ 외야 뒤 135m)에 맞춰 편다. */
+     점처럼 작아졌다. 관중석 반지름 구간을 실제 좌석 거리 구간에 맞춰 편다. */
   const STAND_MIN = 112, STAND_MAX = 414;
-  const NEAR_M = 18, FAR_M = 135;      // 가장 앞줄 ~ 가장 뒷자리 거리
-  const HIGH_M = 28;                    // 가장 뒷자리 높이
+  const NEAR_M = 18, FAR_M = 135, HIGH_M = 28;
 
   function seatFromZone(zone) {
     let span = zone.a1 - zone.a0;
@@ -62,141 +57,157 @@
     const t = Math.max(0, Math.min(1, (r - STAND_MIN) / (STAND_MAX - STAND_MIN)));
     const meters = NEAR_M + t * (FAR_M - NEAR_M);
     return {
-      // 각도 0 = 중견수 방향이므로 그대로 쓰면 된다.
-      x: meters * Math.sin(rad(a)),
+      x: meters * Math.sin(rad(a)),     // 각도 0 = 중견수 방향
       z: meters * Math.cos(rad(a)),
-      y: 4 + t * HIGH_M
+      y: 4 + t * HIGH_M,
+      bearing: a
     };
   }
 
-  /* ---------- 원근 투영 ----------
-     카메라를 좌석에 두고, 기본으로 내야 가운데를 본다.
-     yaw/pitch를 더해 둘러볼 수 있게 한다. */
+  /* ---------- 카메라 ----------
+     좌석에 두고 기본으로 내야 가운데를 본다. yaw/pitch로 둘러본다.
+     원근 나눗셈 전에 잘라내기를 해야 하므로 투영을 두 단계로 나눈다. */
+  const NEAR = 0.5;
+
   function makeCamera(seat, yaw, pitch, W, H) {
-    const target = [0, 1, 34];                       // 2루 언저리. 25로 두니 그라운드가 위로 몰렸다.
+    const target = [0, 1, 34];
     const base = Math.atan2(target[0] - seat.x, target[2] - seat.z);
     const ay = base + rad(yaw);
-    const ax = rad(pitch) + Math.atan2(seat.y - target[1], Math.hypot(target[0] - seat.x, target[2] - seat.z)) * -1;
+    const ax = rad(pitch) - Math.atan2(seat.y - target[1],
+      Math.hypot(target[0] - seat.x, target[2] - seat.z));
 
     const cosY = Math.cos(ay), sinY = Math.sin(ay);
     const cosX = Math.cos(ax), sinX = Math.sin(ax);
-    const f = W * 0.80;                               // 초점거리. 클수록 좁고 크게 보인다.
+    const f = W * 0.80;
 
-    return function project(wx, wy, wz) {
-      let dx = wx - seat.x, dy = wy - seat.y, dz = wz - seat.z;
-      // yaw
-      let rx = dx * cosY - dz * sinY;
+    function toCam(p) {
+      const dx = p[0] - seat.x, dy = p[1] - seat.y, dz = p[2] - seat.z;
+      const rx = dx * cosY - dz * sinY;
       let rz = dx * sinY + dz * cosY;
-      // pitch
-      let ry = dy * cosX - rz * sinX;
+      const ry = dy * cosX - rz * sinX;
       rz = dy * sinX + rz * cosX;
-      if (rz <= 0.4) return null;                     // 카메라 뒤는 그리지 않는다
-      return [W / 2 + f * rx / rz, H / 2 - f * ry / rz, rz];
-    };
+      return [rx, ry, rz];
+    }
+    const toScreen = (c) => [W / 2 + f * c[0] / c[2], H / 2 - f * c[1] / c[2], c[2]];
+    return { toCam, toScreen };
   }
 
-  function poly(pts, attrs) {
-    if (pts.some((p) => !p)) return null;
+  /* 근평면 잘라내기.
+     처음에는 꼭짓점 하나라도 카메라 뒤에 있으면 도형을 통째로 버렸다. 그랬더니
+     옆자리나 외야에서는 홈플레이트가 시야 밖이라 잔디가 아예 사라졌다.
+     버리는 대신 근평면에서 잘라 나머지를 그린다(Sutherland–Hodgman). */
+  function clipNear(cams) {
+    const out = [];
+    for (let i = 0; i < cams.length; i++) {
+      const a = cams[i], b = cams[(i + 1) % cams.length];
+      const ain = a[2] > NEAR, bin = b[2] > NEAR;
+      if (ain) out.push(a);
+      if (ain !== bin) {
+        const t = (NEAR - a[2]) / (b[2] - a[2]);
+        out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, NEAR]);
+      }
+    }
+    return out;
+  }
+
+  function worldPoly(cam, world, attrs) {
+    const clipped = clipNear(world.map(cam.toCam));
+    if (clipped.length < 3) return null;
     return el('polygon', Object.assign({
-      points: pts.map((p) => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')
+      points: clipped.map(cam.toScreen).map((p) => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')
+    }, attrs));
+  }
+
+  function worldLine(cam, a, b, attrs) {
+    let ca = cam.toCam(a), cb = cam.toCam(b);
+    if (ca[2] <= NEAR && cb[2] <= NEAR) return null;
+    if (ca[2] <= NEAR || cb[2] <= NEAR) {
+      const t = (NEAR - ca[2]) / (cb[2] - ca[2]);
+      const mid = [ca[0] + (cb[0] - ca[0]) * t, ca[1] + (cb[1] - ca[1]) * t, NEAR];
+      if (ca[2] <= NEAR) ca = mid; else cb = mid;
+    }
+    const sa = cam.toScreen(ca), sb = cam.toScreen(cb);
+    return el('line', Object.assign({
+      x1: sa[0].toFixed(1), y1: sa[1].toFixed(1), x2: sb[0].toFixed(1), y2: sb[1].toFixed(1)
     }, attrs));
   }
 
   /* ---------- 그리기 ---------- */
   function draw(svg, seat, yaw, pitch, W, H) {
     svg.innerHTML = '';
-    const P = makeCamera(seat, yaw, pitch, W, H);
+    const cam = makeCamera(seat, yaw, pitch, W, H);
     const add = (n) => { if (n) svg.appendChild(n); };
 
-    // 하늘과 먼 배경
     add(el('rect', { x: 0, y: 0, width: W, height: H, fill: '#0b1526' }));
 
-    // 외야 잔디 — 파울라인 안쪽을 부채꼴로
-    const grass = [P(0, 0, 0)];
-    for (let a = -45; a <= 45; a += 3) {
-      const t = Math.abs(a) / 45;
-      const d = WALL.center + (WALL.corner - WALL.center) * t;
-      grass.push(P(d * Math.sin(rad(a)), 0, d * Math.cos(rad(a))));
+    // 외야 잔디 — 홈에서 담장까지 파울라인 안쪽
+    const grass = [[0, 0, 0]];
+    for (let a = -45; a <= 45; a += 2) {
+      const d = wallAt(a);
+      grass.push([d * Math.sin(rad(a)), 0, d * Math.cos(rad(a))]);
     }
-    add(poly(grass, { fill: '#2f7d4f', opacity: '0.55' }));
+    add(worldPoly(cam, grass, { fill: '#2f7d4f', opacity: '0.62' }));
 
     // 내야 흙
-    const dirt = [P(0, 0, -3)];
-    for (let a = -50; a <= 50; a += 4) dirt.push(P(29 * Math.sin(rad(a)), 0, 29 * Math.cos(rad(a))));
-    add(poly(dirt, { fill: '#b98a5a', opacity: '0.7' }));
+    const dirt = [[0, 0.01, -3]];
+    for (let a = -52; a <= 52; a += 3) dirt.push([29 * Math.sin(rad(a)), 0.01, 29 * Math.cos(rad(a))]);
+    add(worldPoly(cam, dirt, { fill: '#b98a5a', opacity: '0.78' }));
 
     // 파울 라인
-    [[-45, '#fff'], [45, '#fff']].forEach(([a, col]) => {
-      const t = Math.abs(a) / 45;
+    [-45, 45].forEach((a) => {
       const d = WALL.corner;
-      const p0 = P(0, 0.02, 0), p1 = P(d * Math.sin(rad(a)), 0.02, d * Math.cos(rad(a)));
-      if (p0 && p1) add(el('line', {
-        x1: p0[0].toFixed(1), y1: p0[1].toFixed(1), x2: p1[0].toFixed(1), y2: p1[1].toFixed(1),
-        stroke: col, 'stroke-width': '2', opacity: '0.75'
-      }));
+      add(worldLine(cam, [0, 0.03, 0], [d * Math.sin(rad(a)), 0.03, d * Math.cos(rad(a))],
+        { stroke: '#fff', 'stroke-width': '2', opacity: '0.8' }));
     });
 
     // 베이스
     Object.keys(BASES).forEach((k) => {
-      const [bx, bz] = BASES[k];
-      const s = 0.6;
-      add(poly([P(bx - s, 0.03, bz - s), P(bx + s, 0.03, bz - s), P(bx + s, 0.03, bz + s), P(bx - s, 0.03, bz + s)],
-        { fill: '#fff', opacity: '0.92' }));
+      const [bx, bz] = BASES[k], s = 0.65;
+      add(worldPoly(cam, [
+        [bx - s, 0.05, bz - s], [bx + s, 0.05, bz - s], [bx + s, 0.05, bz + s], [bx - s, 0.05, bz + s]
+      ], { fill: '#fff', opacity: '0.95' }));
     });
 
     // 마운드
     const mound = [];
-    for (let a = 0; a < 360; a += 15) mound.push(P(2.7 * Math.cos(rad(a)), 0.04, MOUND + 2.7 * Math.sin(rad(a))));
-    add(poly(mound, { fill: '#c99a6a', opacity: '0.9' }));
+    for (let a = 0; a < 360; a += 12) mound.push([2.7 * Math.cos(rad(a)), 0.06, MOUND + 2.7 * Math.sin(rad(a))]);
+    add(worldPoly(cam, mound, { fill: '#c99a6a', opacity: '0.92' }));
 
     // 외야 담장
-    const wallTop = [], wallBot = [];
-    for (let a = -45; a <= 45; a += 3) {
-      const t = Math.abs(a) / 45;
-      const d = WALL.center + (WALL.corner - WALL.center) * t;
-      wallBot.push(P(d * Math.sin(rad(a)), 0, d * Math.cos(rad(a))));
-      wallTop.push(P(d * Math.sin(rad(a)), 2.4, d * Math.cos(rad(a))));
+    const top = [], bot = [];
+    for (let a = -45; a <= 45; a += 2) {
+      const d = wallAt(a);
+      bot.push([d * Math.sin(rad(a)), 0, d * Math.cos(rad(a))]);
+      top.push([d * Math.sin(rad(a)), 2.4, d * Math.cos(rad(a))]);
     }
-    if (wallTop.every(Boolean) && wallBot.every(Boolean)) {
-      add(poly(wallTop.concat(wallBot.slice().reverse()), { fill: '#16324d', opacity: '0.95' }));
-    }
+    add(worldPoly(cam, top.concat(bot.slice().reverse()), { fill: '#16324d', opacity: '0.95' }));
 
-    // 홈플레이트 뒤 백스톱과 스탠드. 외야 자리에서 보면 저쪽이 그냥 비어 있었다.
-    // 내가 앉은 쪽 백스톱은 그리지 않는다. 그 뒤에 앉아 있으니 실제로 안 보이고,
-    // 그리면 화면을 통째로 가린다(챔피언석에서 그라운드가 사라졌었다).
-    const seatBearing = (Math.atan2(seat.x, seat.z) * 180 / Math.PI + 360) % 360;
-    const away = (a) => {
-      const diff = Math.abs(((a - seatBearing + 540) % 360) - 180);   // 시선 반대편일수록 180에 가깝다
-      return diff > 105;
-    };
-    const bsT = [], bsB = [];
-    for (let a = 118; a <= 242; a += 4) {
-      if (!away(a)) { flushBackstop(); continue; }
-      const d = 16;
-      bsB.push(P(d * Math.sin(rad(a)), 0, d * Math.cos(rad(a))));
-      bsT.push(P(d * Math.sin(rad(a)), 4, d * Math.cos(rad(a))));
+    /* 홈플레이트 뒤 백스톱. 내가 앉은 쪽은 그리지 않는다 — 그 뒤에 앉아 있으니
+       실제로 안 보이고, 그리면 화면을 통째로 가린다(챔피언석에서 그라운드가
+       사라졌었다). 시선 반대편만 그린다. */
+    const seg = [];
+    const away = (a) => Math.abs(((a - seat.bearing + 540) % 360) - 180) > 105;
+    for (let a = 116; a <= 244; a += 4) {
+      if (away(a)) seg.push(a); else { flush(); }
     }
-    flushBackstop();
-
-    function flushBackstop() {
-      if (bsT.length > 1 && bsT.every(Boolean) && bsB.every(Boolean)) {
-        add(poly(bsT.concat(bsB.slice().reverse()), { fill: '#16243d', opacity: '0.95' }));
-      }
-      bsT.length = 0; bsB.length = 0;
+    flush();
+    function flush() {
+      if (seg.length < 2) { seg.length = 0; return; }
+      const t = seg.map((a) => [16 * Math.sin(rad(a)), 4, 16 * Math.cos(rad(a))]);
+      const b = seg.map((a) => [16 * Math.sin(rad(a)), 0, 16 * Math.cos(rad(a))]);
+      add(worldPoly(cam, t.concat(b.reverse()), { fill: '#16243d', opacity: '0.95' }));
+      seg.length = 0;
     }
 
-    /* 선수. 멀리 있을수록 작아지는 건 투영이 알아서 해준다.
-       사람 모양은 머리(원) + 몸(선)으로 충분하다 — 이건 시야를 가늠하는 그림이지
-       선수를 그리는 그림이 아니다. */
-    const people = PLAYERS.map((pl) => {
-      const foot = P(pl.pos[0], 0, pl.pos[1]);
-      const head = P(pl.pos[0], 1.75, pl.pos[1]);
-      return foot && head ? { pl, foot, head, depth: foot[2] } : null;
-    }).filter(Boolean).sort((a, b) => b.depth - a.depth);   // 먼 선수부터 그린다
-
-    people.forEach(({ pl, foot, head }) => {
+    /* 선수. 먼 쪽부터 그려야 가까운 선수가 위에 온다. */
+    PLAYERS.map((pl) => {
+      const foot = cam.toCam([pl.pos[0], 0, pl.pos[1]]);
+      const head = cam.toCam([pl.pos[0], 1.75, pl.pos[1]]);
+      if (foot[2] <= NEAR || head[2] <= NEAR) return null;
+      return { pl, foot: cam.toScreen(foot), head: cam.toScreen(head), depth: foot[2] };
+    }).filter(Boolean).sort((a, b) => b.depth - a.depth).forEach(({ pl, foot, head }) => {
       const h = Math.abs(foot[1] - head[1]);
-      if (h < 2.5) return;                                   // 점만도 못하면 생략
+      if (h < 2.5) return;
       const col = pl.batter ? '#ffd27a' : '#ffffff';
       add(el('line', {
         x1: foot[0].toFixed(1), y1: foot[1].toFixed(1),
@@ -211,7 +222,8 @@
       if (h > 13) {
         const t = el('text', {
           x: head[0].toFixed(1), y: (head[1] - h * 0.28).toFixed(1), 'text-anchor': 'middle',
-          fill: '#e6edf8', 'font-size': Math.max(9, Math.min(13, h * 0.34)).toFixed(1), 'pointer-events': 'none'
+          fill: '#e6edf8', 'font-size': Math.max(9, Math.min(13, h * 0.34)).toFixed(1),
+          'pointer-events': 'none'
         });
         t.textContent = pl.name;
         add(t);
@@ -249,7 +261,7 @@
       last = { x: e.clientX, y: e.clientY };
       redraw();
     });
-    const end = (e) => { last = null; };
+    const end = () => { last = null; };
     svg.addEventListener('pointerup', end);
     svg.addEventListener('pointercancel', end);
 
