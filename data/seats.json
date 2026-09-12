@@ -6,28 +6,276 @@
     "화면에서 반드시 그렇게 표기하고, 확인 없이 채우지 않는다."
   ],
   "scoreFields": [
-    { "key": "viewScore",     "label": "시야",        "emoji": "👀" },
-    { "key": "gameScore",     "label": "경기 몰입도", "emoji": "⚾" },
-    { "key": "cheerScore",    "label": "응원 분위기", "emoji": "🔥" },
-    { "key": "photoScore",    "label": "사진 촬영",   "emoji": "📸" },
-    { "key": "valueScore",    "label": "가성비",      "emoji": "💰" },
-    { "key": "sunScore",      "label": "햇빛 영향",   "emoji": "☀️" },
-    { "key": "weatherScore",  "label": "날씨 영향",   "emoji": "🌧️" },
-    { "key": "facilityScore", "label": "편의시설",    "emoji": "🚻" }
+    {
+      "key": "viewScore",
+      "label": "시야",
+      "emoji": "👀"
+    },
+    {
+      "key": "gameScore",
+      "label": "경기 몰입도",
+      "emoji": "⚾"
+    },
+    {
+      "key": "cheerScore",
+      "label": "응원 분위기",
+      "emoji": "🔥"
+    },
+    {
+      "key": "photoScore",
+      "label": "사진 촬영",
+      "emoji": "📸"
+    },
+    {
+      "key": "valueScore",
+      "label": "가성비",
+      "emoji": "💰"
+    },
+    {
+      "key": "sunScore",
+      "label": "햇빛 영향",
+      "emoji": "☀️"
+    },
+    {
+      "key": "weatherScore",
+      "label": "날씨 영향",
+      "emoji": "🌧️"
+    },
+    {
+      "key": "facilityScore",
+      "label": "편의시설",
+      "emoji": "🚻"
+    }
   ],
   "stadiums": {
     "gwangju": {
       "seatTypes": [
-        { "id": "champion", "name": "챔피언석",   "category": "premium", "blocks": null, "verified": false },
-        { "id": "k9",       "name": "K9석",       "category": "infield", "blocks": null, "verified": false },
-        { "id": "k8",       "name": "K8석",       "category": "infield", "blocks": null, "verified": false },
-        { "id": "k5",       "name": "K5석",       "category": "infield", "blocks": null, "verified": false },
-        { "id": "ev",       "name": "EV석",       "category": "infield", "blocks": null, "verified": false },
-        { "id": "table",    "name": "테이블석",   "category": "table",   "blocks": null, "verified": false },
-        { "id": "outfield", "name": "외야 자유석", "category": "outfield","blocks": null, "verified": false }
+        {
+          "id": "champion",
+          "name": "챔피언석",
+          "category": "premium",
+          "blocks": null,
+          "verified": false
+        },
+        {
+          "id": "k9",
+          "name": "K9석",
+          "category": "infield",
+          "blocks": null,
+          "verified": false
+        },
+        {
+          "id": "k8",
+          "name": "K8석",
+          "category": "infield",
+          "blocks": null,
+          "verified": false
+        },
+        {
+          "id": "k5",
+          "name": "K5석",
+          "category": "infield",
+          "blocks": null,
+          "verified": false
+        },
+        {
+          "id": "ev",
+          "name": "EV석",
+          "category": "infield",
+          "blocks": null,
+          "verified": false
+        },
+        {
+          "id": "table",
+          "name": "테이블석",
+          "category": "table",
+          "blocks": null,
+          "verified": false
+        },
+        {
+          "id": "outfield",
+          "name": "외야 자유석",
+          "category": "outfield",
+          "blocks": null,
+          "verified": false
+        }
       ],
       "seatTypesNote": "등급 이름만 2차 출처에서 확인됨. 블록 번호·배치·가격은 공식 좌석도 확인 후 채울 것.",
-      "sections": []
+      "sections": [
+        {
+          "section": "champion",
+          "seatName": "챔피언석",
+          "viewScore": 5,
+          "gameScore": 5,
+          "valueScore": 2,
+          "myeongdang": true,
+          "myeongdangFor": [
+            "focus"
+          ],
+          "description": "TV 중계와 거의 같은 각도로 보는 자리. 가죽 시트라 오래 앉아 있기 편하다.",
+          "basis": "여러 관람 후기에서 \"최고의 명당\"으로 공통 언급. 홈플레이트 바로 뒤, 중계 각도, 가죽 시트가 반복해서 나온다.",
+          "confidence": "corroborated",
+          "sources": [
+            {
+              "name": "Story-V 구역별 명당자리 가이드",
+              "url": "https://story-v.com/entry/2026-%EA%B4%91%EC%A3%BC-%EA%B8%B0%EC%95%84-%ED%83%80%EC%9D%B4%EA%B1%B0%EC%A6%88-%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4-%ED%95%84%EB%93%9C-%EC%98%88%EB%A7%A4-%EC%99%84%EB%B2%BD-%EA%B0%80%EC%9D%B4/"
+            },
+            {
+              "name": "mfitem 좌석 완벽 가이드",
+              "url": "https://www.mfitem.com/2026/04/kia-2026.html"
+            },
+            {
+              "name": "infogoodman 취향별 좌석 추천",
+              "url": "https://www.infogoodman.com/2026/03/gwangju-kia-champions-field-seat-guide-price.html"
+            }
+          ],
+          "updatedAt": "2026-09-12"
+        },
+        {
+          "section": "k9",
+          "seatName": "K9석",
+          "viewScore": 5,
+          "gameScore": 5,
+          "valueScore": 3,
+          "myeongdang": true,
+          "myeongdangFor": [
+            "focus"
+          ],
+          "description": "투수가 던지는 공의 궤적이 가장 정확하게 보이고, 타격음이 그대로 들린다.",
+          "basis": "여러 후기에서 홈플레이트 뒤편 구역으로 공통 언급. \"밸런스가 가장 좋은 자리\"라는 평가가 반복된다.",
+          "confidence": "corroborated",
+          "sources": [
+            {
+              "name": "Story-V 구역별 명당자리 가이드",
+              "url": "https://story-v.com/entry/2026-%EA%B4%91%EC%A3%BC-%EA%B8%B0%EC%95%84-%ED%83%80%EC%9D%B4%EA%B1%B0%EC%A6%88-%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4-%ED%95%84%EB%93%9C-%EC%98%88%EB%A7%A4-%EC%99%84%EB%B2%BD-%EA%B0%80%EC%9D%B4/"
+            },
+            {
+              "name": "mfitem 좌석 완벽 가이드",
+              "url": "https://www.mfitem.com/2026/04/kia-2026.html"
+            },
+            {
+              "name": "infogoodman 취향별 좌석 추천",
+              "url": "https://www.infogoodman.com/2026/03/gwangju-kia-champions-field-seat-guide-price.html"
+            }
+          ],
+          "updatedAt": "2026-09-12"
+        },
+        {
+          "section": "k8",
+          "seatName": "K8석 (응원석)",
+          "cheerScore": 5,
+          "gameScore": 3,
+          "viewScore": 3,
+          "myeongdang": true,
+          "myeongdangFor": [
+            "cheer"
+          ],
+          "description": "3루측 응원단상 앞. 경기 흐름보다 현장 분위기를 먼저 즐기고 싶을 때.",
+          "basis": "여러 후기에서 응원 명당으로 공통 언급(120~122블록 인근). 3루 쪽이 홈팬 응원 몰입감이 크다는 평가도 반복된다.",
+          "confidence": "corroborated",
+          "sources": [
+            {
+              "name": "Story-V 구역별 명당자리 가이드",
+              "url": "https://story-v.com/entry/2026-%EA%B4%91%EC%A3%BC-%EA%B8%B0%EC%95%84-%ED%83%80%EC%9D%B4%EA%B1%B0%EC%A6%88-%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4-%ED%95%84%EB%93%9C-%EC%98%88%EB%A7%A4-%EC%99%84%EB%B2%BD-%EA%B0%80%EC%9D%B4/"
+            },
+            {
+              "name": "mfitem 좌석 완벽 가이드",
+              "url": "https://www.mfitem.com/2026/04/kia-2026.html"
+            },
+            {
+              "name": "infogoodman 취향별 좌석 추천",
+              "url": "https://www.infogoodman.com/2026/03/gwangju-kia-champions-field-seat-guide-price.html"
+            }
+          ],
+          "updatedAt": "2026-09-12"
+        },
+        {
+          "section": "table",
+          "seatName": "테이블석",
+          "viewScore": 3,
+          "myeongdang": true,
+          "myeongdangFor": [
+            "couple",
+            "family"
+          ],
+          "description": "음식과 음료를 놓고 편하게 볼 수 있다. 동행 관람에 잘 맞는다.",
+          "basis": "여러 후기에서 커플·가족 등 동행 관람에 추천되는 자리로 공통 언급.",
+          "confidence": "corroborated",
+          "sources": [
+            {
+              "name": "Story-V 구역별 명당자리 가이드",
+              "url": "https://story-v.com/entry/2026-%EA%B4%91%EC%A3%BC-%EA%B8%B0%EC%95%84-%ED%83%80%EC%9D%B4%EA%B1%B0%EC%A6%88-%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4-%ED%95%84%EB%93%9C-%EC%98%88%EB%A7%A4-%EC%99%84%EB%B2%BD-%EA%B0%80%EC%9D%B4/"
+            },
+            {
+              "name": "mfitem 좌석 완벽 가이드",
+              "url": "https://www.mfitem.com/2026/04/kia-2026.html"
+            },
+            {
+              "name": "infogoodman 취향별 좌석 추천",
+              "url": "https://www.infogoodman.com/2026/03/gwangju-kia-champions-field-seat-guide-price.html"
+            }
+          ],
+          "updatedAt": "2026-09-12"
+        },
+        {
+          "section": "k5",
+          "seatName": "K5석",
+          "valueScore": 4,
+          "viewScore": 3,
+          "myeongdang": true,
+          "myeongdangFor": [
+            "value"
+          ],
+          "description": "가격 대비 무난하게 보기 좋은 자리.",
+          "basis": "여러 후기에서 가성비 자리로 공통 언급.",
+          "confidence": "corroborated",
+          "sources": [
+            {
+              "name": "Story-V 구역별 명당자리 가이드",
+              "url": "https://story-v.com/entry/2026-%EA%B4%91%EC%A3%BC-%EA%B8%B0%EC%95%84-%ED%83%80%EC%9D%B4%EA%B1%B0%EC%A6%88-%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4-%ED%95%84%EB%93%9C-%EC%98%88%EB%A7%A4-%EC%99%84%EB%B2%BD-%EA%B0%80%EC%9D%B4/"
+            },
+            {
+              "name": "mfitem 좌석 완벽 가이드",
+              "url": "https://www.mfitem.com/2026/04/kia-2026.html"
+            },
+            {
+              "name": "infogoodman 취향별 좌석 추천",
+              "url": "https://www.infogoodman.com/2026/03/gwangju-kia-champions-field-seat-guide-price.html"
+            }
+          ],
+          "updatedAt": "2026-09-12"
+        },
+        {
+          "section": "outfield",
+          "seatName": "외야 자유석",
+          "valueScore": 5,
+          "viewScore": 2,
+          "cheerScore": 4,
+          "myeongdang": true,
+          "myeongdangFor": [
+            "value"
+          ],
+          "description": "지정석이 없어 먼저 온 사람이 임자. 가장 저렴하게 보는 방법.",
+          "basis": "여러 후기에서 가성비 자리로 공통 언급. 예약제인 가족석을 뺀 외야는 자유석이라는 설명이 반복된다.",
+          "confidence": "corroborated",
+          "sources": [
+            {
+              "name": "Story-V 구역별 명당자리 가이드",
+              "url": "https://story-v.com/entry/2026-%EA%B4%91%EC%A3%BC-%EA%B8%B0%EC%95%84-%ED%83%80%EC%9D%B4%EA%B1%B0%EC%A6%88-%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4-%ED%95%84%EB%93%9C-%EC%98%88%EB%A7%A4-%EC%99%84%EB%B2%BD-%EA%B0%80%EC%9D%B4/"
+            },
+            {
+              "name": "mfitem 좌석 완벽 가이드",
+              "url": "https://www.mfitem.com/2026/04/kia-2026.html"
+            },
+            {
+              "name": "infogoodman 취향별 좌석 추천",
+              "url": "https://www.infogoodman.com/2026/03/gwangju-kia-champions-field-seat-guide-price.html"
+            }
+          ],
+          "updatedAt": "2026-09-12"
+        }
+      ],
+      "sectionsNote": "여러 관람 후기에서 공통으로 언급되는 내용만 담았습니다. 공식 평가가 아니며, 출처가 말하지 않은 항목(햇빛·날씨·편의시설 영향, 사진 촬영 등)은 비워 두었습니다. 블록 번호와 실제 가격은 공식 좌석도 확인 후 채웁니다."
     }
   }
 }

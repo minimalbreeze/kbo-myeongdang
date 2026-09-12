@@ -8,9 +8,9 @@ name: 데이터 검사
 on:
   push:
     branches: [main]
-    paths: ['data/**', 'scripts/validate-data.mjs', '.github/workflows/validate.yml']
+    paths: ['data/**', 'js/**', 'scripts/**', '.github/workflows/validate.yml']
   pull_request:
-    paths: ['data/**', 'scripts/validate-data.mjs', '.github/workflows/validate.yml']
+    paths: ['data/**', 'js/**', 'scripts/**', '.github/workflows/validate.yml']
   workflow_dispatch:
 
 jobs:
@@ -23,3 +23,6 @@ jobs:
           node-version: '20'
       - name: 데이터 검사
         run: node scripts/validate-data.mjs
+
+      - name: 추천 알고리즘 테스트
+        run: node scripts/test-recommend.mjs

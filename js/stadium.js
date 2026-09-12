@@ -7,6 +7,8 @@
   const q = new URLSearchParams(location.search);
 
   let stadium = null, mapData = null, seatData = { sections: [], seatTypes: [] }, controller = null;
+  const VIEW_KEY = 'kbo:mapView';
+  let viewMode = 'flat';   // flat = 평면도, tilt = 기울여 본 입체
   let openedZone = null;   // 시트가 지금 보여주는 구역 (버튼 위임에서 쓴다)
 
   const sheet = () => document.getElementById('sheet');
@@ -37,8 +39,28 @@
     const c = CONFIDENCE[key];
     const section = seatData.sections.find((s) => s.section === zone.id || s.zoneId === zone.id);
 
-    let html = '<h2>' + R.esc(zone.name) + '</h2>' +
-      '<p><span class="badge ' + c.cls + '">' + R.esc(c.badge) + '</span></p>';
+    const MY_LABEL = {
+      focus: '경기 집중', cheer: '응원', family: '가족',
+      couple: '커플', photo: '사진', value: '가성비'
+    };
+
+    let html = '<h2>' + R.esc(zone.name) + '</h2><p>';
+    if (section && section.myeongdang) {
+      const forWhat = (section.myeongdangFor || []).map((k) => MY_LABEL[k]).filter(Boolean).join('·');
+      html += '<span class="badge badge-my">🏅 명당' + (forWhat ? ' · ' + R.esc(forWhat) : '') + '</span> ';
+    }
+    html += '<span class="badge ' + c.cls + '">' + R.esc(c.badge) + '</span></p>';
+
+    // 왜 명당이라고 하는지, 어디서 온 이야기인지를 먼저 말한다.
+    // 이건 공식 평가가 아니라 후기를 모은 것이므로 출처를 숨기지 않는다.
+    if (section && section.basis) {
+      html += '<p class="basis">' + R.esc(section.basis) + '</p>';
+      if (section.sources && section.sources.length) {
+        html += '<p class="meta">출처: ' + section.sources.map((x) =>
+          '<a href="' + R.esc(x.url) + '" target="_blank" rel="noopener">' + R.esc(x.name) + '</a>'
+        ).join(' · ') + '</p>';
+      }
+    }
 
     if (!zone.verified) {
       const why = (zone.why || '').trim();
@@ -49,10 +71,13 @@
     // 평가 — 있으면 별점, 없으면 준비 중
     html += '<h3 style="margin-top:16px">좌석 평가</h3>';
     if (section) {
-      html += '<ul class="scores">' + seatData.scoreFields.map((f) =>
-        '<li><span>' + f.emoji + ' ' + R.esc(f.label) + '</span><span>' +
-        R.stars(section[f.key]) + '</span></li>').join('') + '</ul>';
       if (section.description) html += '<p>' + R.esc(section.description) + '</p>';
+      html += '<ul class="scores">' + seatData.scoreFields.map((f) => {
+        const v = section[f.key];
+        return '<li><span>' + f.emoji + ' ' + R.esc(f.label) + '</span><span>' +
+          (typeof v === 'number' ? R.stars(v)
+            : '<span class="empty-inline">후기에 언급 없음</span>') + '</span></li>';
+      }).join('') + '</ul>';
     } else {
       html += R.emptyBox('이 구역의 평가가 아직 없습니다.');
     }
@@ -88,6 +113,52 @@
 
     openedZone = zone;
     window.KboAnalytics.track('seat_view', { stadium: stadium.id, zone: zone.id });
+  }
+
+  /* ---------- 맞춤 추천 ----------
+     홈에서 고른 취향(?prefs=focus,cheer)으로 순위를 매겨 보여준다.
+     지도 우선으로 다시 만들면서 이걸 읽는 쪽이 사라져 있었다. */
+  function prefIds() {
+    return (q.get('prefs') || '').split(',').filter(Boolean);
+  }
+
+  function openRecommend() {
+    const prefs = prefIds();
+    const labels = prefs
+      .map((id) => (window.KboRecommend.PREFS.find((p) => p.id === id) || {}).label)
+      .filter(Boolean);
+
+    let html = '<h2>🎯 나에게 맞는 자리</h2>';
+    if (!prefs.length) {
+      html += R.emptyBox('홈에서 무엇이 중요한지 먼저 골라주세요.') +
+        '<p><a class="btn btn-block" href="./">홈으로</a></p>';
+      openSheet(html);
+      return;
+    }
+    html += '<p class="meta">' + R.esc(labels.join(' · ')) + ' 기준</p>';
+
+    const ranked = window.KboRecommend.rank(seatData.sections, prefs);
+    if (!ranked.length) {
+      html += R.emptyBox('아직 이 구장에는 점수가 매겨진 구역이 없습니다.');
+    } else {
+      html += ranked.map((r, i) => {
+        const sec = r.section;
+        return '<button class="rank rank-btn" type="button" data-zone-id="' + R.esc(sec.section) + '">' +
+          '<span class="medal">' + ['🥇', '🥈', '🥉'][i] + '</span>' +
+          '<span class="rank-body"><b>' + R.esc(sec.seatName || sec.section) + '</b>' +
+          '<span class="badge">명당 점수 ' + r.score + '</span>' +
+          (sec.description ? '<span class="rank-desc">' + R.esc(sec.description) + '</span>' : '') +
+          '</span></button>';
+      }).join('');
+      html += '<p class="meta">누르면 그 구역을 자세히 볼 수 있습니다.</p>';
+      // 1위 점수가 낮으면 "이게 최선"이 아니라 "아직 모른다"는 뜻이다. 그렇게 말한다.
+      if (ranked[0].score < 50) {
+        html += '<p class="disclaimer">이 취향에 대해서는 아직 모아둔 후기가 적습니다. ' +
+          '순위는 참고만 하시고, 직접 가보신 뒤 제보해주시면 다음 사람에게 도움이 됩니다.</p>';
+      }
+    }
+    html += '<p class="disclaimer">' + R.esc(CFG.scoreDisclaimer) + '</p>';
+    openSheet(html);
   }
 
   /* ---------- 제보 ----------
@@ -237,11 +308,25 @@
     mapData = await safe(() => window.KboData.load('map/' + stadium.id + '.json'));
 
     const host = document.getElementById('seat-map');
-    if (mapData) {
+    try { viewMode = localStorage.getItem(VIEW_KEY) === 'tilt' ? 'tilt' : 'flat'; } catch (e) {}
+
+    function drawMap() {
       controller = window.KboSeatMap.render(host, mapData, {
         onZone: openZone,
         onFacility: (f) => openSheet('<h2>' + R.esc(f.name) + '</h2>' +
           '<p>' + R.textOr(f.location) + '</p>')
+      }, viewMode);
+      const b = document.getElementById('view-btn');
+      b.textContent = viewMode === 'tilt' ? '🗺️ 평면으로 보기' : '🏟️ 입체로 보기';
+      b.setAttribute('aria-pressed', String(viewMode === 'tilt'));
+    }
+
+    if (mapData) {
+      drawMap();
+      document.getElementById('view-btn').addEventListener('click', () => {
+        viewMode = viewMode === 'tilt' ? 'flat' : 'tilt';
+        try { localStorage.setItem(VIEW_KEY, viewMode); } catch (e) {}
+        drawMap();
       });
       // 개략도라는 사실은 범례 안에 둔다 — 화면 위에 떠다니는 글이 하나 줄고,
       // 신뢰도 설명과 같은 자리에 있어야 뜻이 통한다.
@@ -263,6 +348,14 @@
       if (ev.key === 'Escape' && sheet().dataset.open === 'true') closeSheet();
     });
 
+    // 추천 목록에서 구역으로 건너뛰기
+    body().addEventListener('click', (ev) => {
+      const b = ev.target.closest('[data-zone-id]');
+      if (!b || !mapData) return;
+      const zone = mapData.zones.find((z) => z.id === b.dataset.zoneId);
+      if (zone) openZone(zone);
+    });
+
     // 시트 안 버튼은 위임으로 한 번만 연결한다.
     // (시트를 열 때마다 붙이면 리스너가 쌓여 공유가 여러 번 실행된다)
     body().addEventListener('click', (ev) => {
@@ -277,6 +370,7 @@
     });
     document.getElementById('reset-btn').addEventListener('click', () => controller && controller.reset());
     document.getElementById('report-btn').addEventListener('click', () => openReport(null));
+    document.getElementById('rec-btn').addEventListener('click', openRecommend);
     document.getElementById('wx-chip').addEventListener('click', openBriefing);
 
     fillWeatherChip();
@@ -286,6 +380,10 @@
     if (z && mapData) {
       const zone = mapData.zones.find((x) => x.id === z);
       if (zone) openZone(zone);
+    } else if (prefIds().length) {
+      // 홈에서 취향을 고르고 왔으면 추천부터 보여준다.
+      openRecommend();
+      window.KboAnalytics.track('seat_recommend', { stadium: stadium.id, prefs: prefIds().join(',') });
     }
   })();
 })();
