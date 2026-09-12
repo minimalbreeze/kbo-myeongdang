@@ -83,15 +83,18 @@
     }
     html += '<p class="disclaimer">' + R.esc(CFG.scoreDisclaimer) + '</p>';
 
-    // 시야
+    // 시야 — 실제 사진이 있으면 그것이 먼저다. 없으면 기하 개략도를 보여준다.
     html += '<h3 style="margin-top:16px">👀 이 자리에서 보기</h3>';
     if (section && section.viewImage) {
       html += '<img src="' + R.esc(section.viewImage) + '" alt="' + R.esc(zone.name) +
         ' 시야 사진" loading="lazy" style="width:100%;border-radius:12px" />';
       if (section.viewSource) html += '<p class="meta">촬영: ' + R.esc(section.viewSource) + '</p>';
     } else {
-      html += R.emptyBox('현재 시야 자료 준비 중') +
-        '<p class="meta">실제 촬영본만 씁니다. 생성 이미지를 실제 시야처럼 보여주지 않습니다.</p>';
+      html += '<div id="seat-view"></div>' +
+        '<p class="view-hint">손가락으로 끌어서 둘러보세요 ↔</p>' +
+        '<p class="meta">이 그림은 <b>사진이 아니라 기하 개략도</b>입니다. ' +
+        '베이스 간격·마운드 거리·수비 위치는 야구의 규격이지만, 이 구장의 실제 외야 거리와 ' +
+        '스탠드 높이는 실측이 아닙니다. 실제 시야 사진이 생기면 그쪽을 먼저 보여줍니다.</p>';
     }
 
     // 가격
@@ -112,6 +115,14 @@
     history.replaceState(null, '', u.toString());
 
     openedZone = zone;
+
+    // 시야 개략도는 시트가 DOM에 올라간 뒤에 붙인다(폭을 재야 한다).
+    const host = body().querySelector('#seat-view');
+    if (host && window.KboSeatView) {
+      try { window.KboSeatView.mount(host, zone, { width: host.clientWidth || 340 }); }
+      catch (e) { host.innerHTML = ''; }
+    }
+
     window.KboAnalytics.track('seat_view', { stadium: stadium.id, zone: zone.id });
   }
 
