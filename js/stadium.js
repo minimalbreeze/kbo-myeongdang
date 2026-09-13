@@ -8,6 +8,7 @@
 
   let stadium = null, mapData = null, seatData = { sections: [], seatTypes: [] }, controller = null;
   let openedZone = null;   // 시트가 지금 보여주는 구역 (버튼 위임에서 쓴다)
+  let openedView = null;   // 그 구역의 시야 컨트롤러 (공유 카드가 각도를 물어본다)
 
   /* 응원하는 쪽. 광주는 3루가 홈(KIA), 1루가 원정이다. 구장마다 다르므로
      데이터의 side를 보고 판단한다. 원정 팬에게 홈 응원석은 명당이 아니다. */
@@ -161,8 +162,9 @@
 
     // 시야 개략도는 시트가 DOM에 올라간 뒤에 붙인다(폭을 재야 한다).
     const host = body().querySelector('#seat-view');
+    openedView = null;
     if (host && window.KboSeatView) {
-      try { window.KboSeatView.mount(host, zone, { width: host.clientWidth || 340 }); }
+      try { openedView = window.KboSeatView.mount(host, zone, { width: host.clientWidth || 340 }); }
       catch (e) { host.innerHTML = ''; }
     }
 
@@ -469,7 +471,22 @@
       const b = ev.target.closest('[data-act]');
       if (!b || !openedZone) return;
       if (b.dataset.act === 'share') {
-        window.KboShare.share(CFG.shareCopy.seat(stadium.name, openedZone.name), location.href);
+        const zone = openedZone;
+        const text = CFG.shareCopy.seat(stadium.name, zone.name);
+        const url = location.href;
+        if (window.KboShareCard && window.KboSeatView) {
+          const angle = openedView ? openedView.angle() : { yaw: 0, pitch: 0 };
+          const sec = seatData.sections.find((x) => x.section === zone.id || x.zoneId === zone.id);
+          window.KboShare.shareImage(
+            () => window.KboShareCard.build({
+              stadiumName: stadium.name, zone: zone, section: sec,
+              rank: ranks[zone.id], side: (sec && sec.side) || zone.side,
+              yaw: angle.yaw, pitch: angle.pitch
+            }),
+            'kbo-myeongdang-' + zone.id + '.png', text, url);
+        } else {
+          window.KboShare.share(text, url);
+        }
         window.KboAnalytics.track('seat_share', { stadium: stadium.id, zone: openedZone.id });
       } else {
         openReport(openedZone);

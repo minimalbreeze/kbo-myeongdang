@@ -462,9 +462,25 @@
 
     return {
       reset() { yaw = 0; pitch = 0; redraw(); },
-      look(dy) { yaw = Math.max(-70, Math.min(70, yaw + dy)); redraw(); }
+      look(dy) { yaw = Math.max(-70, Math.min(70, yaw + dy)); redraw(); },
+      // 공유 카드가 "지금 보고 있는 각도" 그대로를 담을 수 있어야 한다.
+      angle() { return { yaw: yaw, pitch: pitch }; }
     };
   }
 
-  window.KboSeatView = { mount, seatFromZone, PLAYERS };
+  /* 화면에 붙이지 않고 그리기만 한다. 공유 카드처럼 큰 판에 한 번 그려서
+     이미지로 굽는 용도. mount와 같은 draw를 쓰므로 보이는 것과 어긋나지 않는다. */
+  function snapshot(zone, opts) {
+    const o = opts || {};
+    const W = o.width || 1080, H = o.height || 660;
+    const svg = el('svg', {
+      xmlns: 'http://www.w3.org/2000/svg',
+      viewBox: '0 0 ' + W + ' ' + H, width: W, height: H
+    });
+    draw(svg, seatFromZone(zone), o.yaw || 0, o.pitch || 0, W, H,
+      'snap' + Math.random().toString(36).slice(2, 8));
+    return svg;
+  }
+
+  window.KboSeatView = { mount, snapshot, seatFromZone, PLAYERS };
 })();
