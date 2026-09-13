@@ -43,5 +43,30 @@
     }
   }
 
-  window.KboShare = { share, copy, currentUrl, toast };
+  /* 이미지까지 얹은 공유.
+     iOS는 navigator.share()를 누른 직후에만 열어주는데, 카드를 굽는 데 시간이
+     걸려서 그 창을 놓친다. 그래서 여기서는 굽기를 기다렸다가 부르고, 실패하면
+     조용히 글자 공유로 내려간다 — 사용자가 보기에 아무 일도 안 일어나는 것이
+     제일 나쁘다.
+
+     buildBlob은 함수로 받는다. 공유를 못 하는 환경이면 굽지도 않는다. */
+  function shareImage(buildBlob, filename, text, url) {
+    const full = text + '\n' + url;
+    if (!navigator.canShare || !window.File) { share(text, url); return; }
+
+    toast('공유 카드를 만드는 중… 🎨');
+    Promise.resolve()
+      .then(buildBlob)
+      .then((blob) => {
+        const file = new File([blob], filename, { type: 'image/png' });
+        if (!navigator.canShare({ files: [file] })) { share(text, url); return; }
+        return navigator.share({ files: [file], text: full }).catch((e) => {
+          if (e && e.name === 'AbortError') return;   // 사용자가 닫음
+          share(text, url);
+        });
+      })
+      .catch(() => share(text, url));
+  }
+
+  window.KboShare = { share, shareImage, copy, currentUrl, toast };
 })();
