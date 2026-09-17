@@ -131,8 +131,73 @@
       "side": "neutral"
     }
   ],
-  "facilities": [],
-  "facilitiesNote": "화장실·매점·굿즈샵 핀은 실제 위치가 확인된 뒤에만 올립니다. 추정 위치를 찍지 않습니다.",
+  "facilities": [
+    {
+      "id": "food-1b",
+      "emoji": "🍗",
+      "name": "3층 1루 푸드존",
+      "kind": "food",
+      "x": 763.9,
+      "y": 746.5
+    },
+    {
+      "id": "food-3b",
+      "emoji": "🍤",
+      "name": "3층 3루 푸드존",
+      "kind": "food",
+      "x": 234.6,
+      "y": 737.3
+    },
+    {
+      "id": "food-of",
+      "emoji": "🌭",
+      "name": "5층 외야 푸드존",
+      "kind": "food",
+      "x": 553.8,
+      "y": 394.7
+    },
+    {
+      "id": "gate-5",
+      "emoji": "🚪",
+      "name": "5출입구",
+      "kind": "gate",
+      "x": 214.7,
+      "y": 607.3
+    },
+    {
+      "id": "gate-6",
+      "emoji": "🚪",
+      "name": "6출입구",
+      "kind": "gate",
+      "x": 257.3,
+      "y": 523.7
+    },
+    {
+      "id": "ev-space",
+      "emoji": "🎪",
+      "name": "EV 스페이스",
+      "kind": "event",
+      "x": 312.2,
+      "y": 459.7
+    },
+    {
+      "id": "teamstore",
+      "emoji": "🎁",
+      "name": "팀스토어 광주",
+      "kind": "shop",
+      "x": 395.7,
+      "y": 413.4
+    },
+    {
+      "id": "food-if",
+      "emoji": "🥐",
+      "name": "3층 내야 푸드존",
+      "kind": "food",
+      "x": 564.7,
+      "y": 941.5
+    }
+  ],
+  "facilitiesNote": "핀 위치는 층·구역 수준의 개략 위치입니다. 공식 안내도로 확인되면 정확한 지점으로 옮깁니다. 화장실은 아직 층·위치를 확인하지 못해 올리지 않았습니다.",
   "mapLabelNote": "mapLabel이 있으면 지도 위에는 그 글자를 쓴다(띠를 넘치는 긴 이름용).",
   "sideNote": "side: home = 홈(KIA) 응원석 쪽, away = 원정 응원석 쪽, neutral = 어느 쪽도 아님. 광주는 3루가 홈이다."
 }

@@ -34,7 +34,9 @@
     return {
       scoreFields: d.scoreFields,
       seatTypes: (s && s.seatTypes) || [],
-      sections: (s && s.sections) || []
+      sections: (s && s.sections) || [],
+      // 열 안내는 구역마다 따로 두지 않는다 — 블록이 달라도 열 구성은 같다.
+      rowGuide: (s && s.rowGuide) || null
     };
   }
 

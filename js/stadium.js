@@ -7,6 +7,7 @@
   const q = new URLSearchParams(location.search);
 
   let stadium = null, mapData = null, seatData = { sections: [], seatTypes: [] }, controller = null;
+  let placeData = { foods: [], shops: [], facilities: [] };
   let openedZone = null;   // 시트가 지금 보여주는 구역 (버튼 위임에서 쓴다)
   let openedView = null;   // 그 구역의 시야 컨트롤러 (공유 카드가 각도를 물어본다)
 
@@ -55,6 +56,108 @@
     unplaced:     { badge: '⚪ 위치 미확인',        cls: '' }
   };
 
+  /* ---------- 지도의 시설 핀 ----------
+     아이콘만 찍어두고 이름만 보여주면 지도에 점을 찍은 것에 지나지 않는다.
+     누르면 그 자리에서 알아야 할 것이 전부 나와야 한다 — 굿즈샵이면 위치와
+     무엇을 사면 좋은지까지. */
+  function openPlace(f) {
+    const all = placeData.foods.concat(placeData.shops, placeData.facilities);
+    const d = all.find((x) => x.storeId === f.id || x.id === f.id) || {};
+
+    let html = '<h2>' + (f.emoji ? f.emoji + ' ' : '') + R.esc(f.name) + '</h2>';
+    const where = d.location || d.floor || f.kind;
+    if (where) html += '<p class="place-where-big">' + R.esc(where) + '</p>';
+
+    if (d.brands && d.brands.length) {
+      html += '<div class="place-menu">' + d.brands.map((b) =>
+        '<span>' + R.esc(b) + '</span>').join('') + '</div>';
+    } else if (d.menu && d.menu.length) {
+      html += '<div class="place-menu">' + d.menu.map((mm) =>
+        '<span>' + R.esc(mm) + '</span>').join('') + '</div>';
+    }
+
+    if (d.description) html += '<p>' + R.esc(d.description) + '</p>';
+
+    // 시설 안내는 여러 줄로 들어온다
+    if (d.detail && d.detail.length) {
+      html += '<ul class="detail">' + d.detail.map((x) =>
+        '<li>' + R.esc(x) + '</li>').join('') + '</ul>';
+    }
+
+    // 굿즈샵의 "무엇을 살까"
+    if (d.picks && d.picks.length) {
+      html += '<h3 style="margin-top:16px">이런 걸 많이 삽니다</h3>';
+      html += '<ul class="detail">' + d.picks.map((x) =>
+        '<li>' + R.esc(x) + '</li>').join('') + '</ul>';
+    }
+
+    if (d.tip) html += '<p class="guide-tip">' + R.esc(d.tip) + '</p>';
+
+    if (d.links && d.links.length) {
+      html += '<p>' + d.links.map((l) =>
+        '<a class="btn btn-ghost btn-block" href="' + R.esc(l.url) +
+        '" target="_blank" rel="noopener">' + R.esc(l.name) + ' ›</a>').join('') + '</p>';
+    }
+    if (d.note) html += '<p class="meta">' + R.esc(d.note) + '</p>';
+
+    if (!d.description && !d.detail && !d.brands && !d.menu) {
+      html += R.emptyBox('이 시설은 아직 정리된 내용이 없습니다.');
+    }
+    openSheet(html);
+    window.KboAnalytics.track('place_view', { stadium: stadium.id, place: f.id });
+  }
+
+  /* ---------- 이 구역 어디에 앉을까 ----------
+     "K8석은 명당입니다"로 끝내면 아무 말도 안 한 것과 같다. 여섯 블록이 다
+     같지 않고, 같은 블록 안에서도 열에 따라 완전히 다른 자리다.
+     블록 단위 추천과 열 단위 추천을 구역 설명 끝에 붙인다. */
+  function seatPicks(section) {
+    const picks = (section && section.pickSeats) || [];
+    const rows = (seatData.rowGuide && seatData.rowGuide.picks) || [];
+    if (!picks.length && !rows.length) return '';
+
+    let h = '<h3 style="margin-top:18px">🎯 이 구역 어디에 앉을까</h3>';
+
+    if (picks.length) {
+      h += '<ul class="picks">' + picks.map((p) =>
+        '<li><span class="pick-head"><b>' + R.esc(p.label) + '</b>' +
+        '<span class="pick-no">' + p.blocks.map(R.esc).join(' · ') + '</span></span>' +
+        '<span class="pick-why">' + R.esc(p.why) + '</span></li>').join('') + '</ul>';
+    }
+
+    if (rows.length) {
+      h += '<p class="pick-sub">열은 어느 블록이든 같습니다</p>';
+      h += '<ul class="picks picks-row">' + rows.map((r) =>
+        '<li><span class="pick-head"><b>' + R.esc(r.label) + '</b>' +
+        '<span class="pick-no">' + R.esc(r.rows) + '</span></span>' +
+        '<span class="pick-why">' + R.esc(r.detail) + '</span></li>').join('') + '</ul>';
+    }
+    return h;
+  }
+
+  /* ---------- 이 자리에서 가는 길 ----------
+     자리만 알려주고 끝내면 반쪽이다. 어디로 들어가서 무엇을 먹는지까지가
+     "야구장 가기 전에 미리 본다"는 말의 나머지 절반이다. */
+  function zoneGuide(section) {
+    const g = section && section.guide;
+    if (!g) return '';
+    let h = '';
+    if (g.food) {
+      h += '<h3 style="margin-top:18px">🍤 이 자리 먹거리</h3>';
+      h += '<div class="guide-card">' +
+        '<p class="guide-where">' + R.esc(g.food.where) + '</p>' +
+        '<p class="guide-pick"><b>' + R.esc(g.food.pick) + '</b></p>' +
+        (g.food.tip ? '<p class="guide-tip">' + R.esc(g.food.tip) + '</p>' : '') +
+        '</div>';
+    }
+    if (g.gate) {
+      h += '<h3 style="margin-top:18px">🚪 가까운 출입구</h3>';
+      h += '<div class="guide-card"><p class="guide-where">' + R.esc(g.gate.where) + '</p>' +
+        (g.gate.tip ? '<p class="guide-tip">' + R.esc(g.gate.tip) + '</p>' : '') + '</div>';
+    }
+    return h;
+  }
+
   /* ---------- 구역 시트 ---------- */
   function openZone(zone) {
     const key = zone.verified ? 'verified' : (zone.confidence || 'unplaced');
@@ -84,27 +187,16 @@
     }
     html += '<span class="badge ' + c.cls + '">' + R.esc(c.badge) + '</span></p>';
 
-    // 왜 명당이라고 하는지, 어디서 온 이야기인지를 먼저 말한다.
-    // 이건 공식 평가가 아니라 후기를 모은 것이므로 출처를 숨기지 않는다.
     if (section && section.blocks && section.blocks.length) {
       html += '<p class="blocks">블록 ' + section.blocks.map((b) =>
         '<b>' + R.esc(b) + '</b>').join(' · ') + '</p>';
       if (section.blocksNote) html += '<p class="meta">' + R.esc(section.blocksNote) + '</p>';
     }
-    if (section && section.basis) {
-      html += '<p class="basis">' + R.esc(section.basis) + '</p>';
-      if (section.sources && section.sources.length) {
-        html += '<p class="meta">출처: ' + section.sources.map((x) =>
-          '<a href="' + R.esc(x.url) + '" target="_blank" rel="noopener">' + R.esc(x.name) + '</a>'
-        ).join(' · ') + '</p>';
-      }
-    }
+    if (section && section.basis) html += '<p class="basis">' + R.esc(section.basis) + '</p>';
 
-    if (!zone.verified) {
-      const why = (zone.why || '').trim();
-      html += '<p class="disclaimer">' + (why ? R.esc(why.replace(/[.]?$/, '.')) + ' ' : '') +
-        '공식 좌석도로 확인한 뒤 정확한 블록 번호와 경계를 반영합니다.</p>';
-    }
+    /* 구역 하나를 통째로 "명당"이라고 하면 아무 말도 안 한 것과 같다.
+       구역 안에서 어느 블록, 어느 열에 앉아야 하는지까지 내려간다. */
+    html += seatPicks(section);
 
     // 평가 — 있으면 별점, 없으면 준비 중
     html += '<h3 style="margin-top:16px">좌석 평가</h3>';
@@ -119,7 +211,6 @@
     } else {
       html += R.emptyBox('이 구역의 평가가 아직 없습니다.');
     }
-    html += '<p class="disclaimer">' + R.esc(CFG.scoreDisclaimer) + '</p>';
 
     // 시야 — 실제 사진이 있으면 그것이 먼저다. 없으면 기하 개략도를 보여준다.
     html += '<h3 style="margin-top:16px">👀 이 자리에서 보기</h3>';
@@ -133,12 +224,6 @@
         '<p class="meta">이 그림은 <b>사진이 아니라 기하 개략도</b>입니다. ' +
         '베이스 간격·마운드 거리·수비 위치는 야구의 규격이지만, 이 구장의 실제 외야 거리와 ' +
         '스탠드 높이는 실측이 아닙니다.</p>';
-      if (section && section.viewPhotosUrl) {
-        html += '<p><a class="btn btn-ghost btn-block" href="' + R.esc(section.viewPhotosUrl) +
-          '" target="_blank" rel="noopener">📷 실제 시야 사진 보러가기 ›</a></p>' +
-          '<p class="meta">자리어때에 이 구장 구역별 시야 사진이 올라와 있습니다. ' +
-          '개략도보다 사진이 정확하니 그쪽을 함께 보세요.</p>';
-      }
     }
 
     // 가격
@@ -147,10 +232,16 @@
       ? '<p><b>' + R.textOr(section.price) + '</b></p>'
       : R.emptyBox('최신 가격 확인 필요');
 
+    html += zoneGuide(section);
+
     html += '<div class="sheet-actions">' +
-      '<button class="btn btn-ghost" type="button" data-act="share">🔗 이 자리 공유</button>' +
-      '<button class="btn btn-primary" type="button" data-act="report">📍 정보 제보</button>' +
-      '</div>';
+      '<button class="btn btn-primary btn-block" type="button" data-act="share">' +
+      '🔗 이 자리 공유</button></div>';
+
+    /* 틀린 내용을 바로잡는 통로는 남겨 둔다. 다만 화면 앞에 내세우지 않는다 —
+       이 앱은 제보를 모으는 곳이 아니라 흩어진 정보를 정리해 알려주는 곳이다. */
+    html += '<p class="fix-line"><button type="button" data-act="report">' +
+      '이 구역 정보가 사실과 다른가요?</button></p>';
 
     openSheet(html, zone);
 
@@ -386,6 +477,13 @@
     window.KboAnalytics.track('stadium_view', { stadium: stadium.id });
 
     seatData = (await safe(() => window.KboData.seats(stadium.id))) || seatData;
+    /* 지도의 시설 핀은 누르는 즉시 내용이 나와야 한다. 그때 가서 받아오면
+       빈 시트가 먼저 뜬다. 지도를 그리기 전에 같이 받아 둔다. */
+    placeData = {
+      foods: (await safe(() => window.KboData.foods(stadium.id))) || [],
+      shops: (await safe(() => window.KboData.shops(stadium.id))) || [],
+      facilities: (await safe(() => window.KboData.facilities(stadium.id))) || []
+    };
     mapData = await safe(() => window.KboData.load('map/' + stadium.id + '.json'));
 
     const host = document.getElementById('seat-map');
@@ -396,8 +494,7 @@
       computeRanks();
       controller = window.KboSeatMap.render(host, mapData, {
         onZone: openZone,
-        onFacility: (f) => openSheet('<h2>' + R.esc(f.name) + '</h2>' +
-          '<p>' + R.textOr(f.location) + '</p>')
+        onFacility: openPlace
       }, { fanSide: fanSide, ranks: ranks });
       const basis = prefIds().length
         ? prefIds().map((id) => (window.KboRecommend.PREFS.find((p) => p.id === id) || {}).label)
@@ -422,12 +519,11 @@
         drawMap();
         window.KboShare.toast(fanSide === 'away' ? '원정 팬 기준으로 봅니다 ✈️' : '홈 팬 기준으로 봅니다 🏠');
       });
-      // 개략도라는 사실은 범례 안에 둔다 — 화면 위에 떠다니는 글이 하나 줄고,
-      // 신뢰도 설명과 같은 자리에 있어야 뜻이 통한다.
+      // 개략도라는 사실은 범례 안에 둔다 — 화면 위에 떠다니는 글이 하나 줄어든다.
       if (mapData.schematic) {
         const note = document.createElement('div');
         note.style.cssText = 'margin-top:8px;padding-top:8px;border-top:1px solid #e7ecf4;color:#5d6a85';
-        note.textContent = '등급 배치 개략도입니다.';
+        note.textContent = '구역 배치 개략도입니다.';
         document.getElementById('legend').appendChild(note);
       }
     } else {
@@ -493,7 +589,6 @@
       }
     });
     document.getElementById('reset-btn').addEventListener('click', () => controller && controller.reset());
-    document.getElementById('report-btn').addEventListener('click', () => openReport(null));
     document.getElementById('rec-btn').addEventListener('click', openRecommend);
     document.getElementById('wx-chip').addEventListener('click', openBriefing);
 
