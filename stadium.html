@@ -62,15 +62,9 @@
     <button id="rec-btn" type="button">🎯 맞춤 추천</button>
   </div>
 
-  <!-- 안내 범례. 전에는 "좌석 정보 신뢰도"를 띄웠는데, 지도를 보러 온 사람이
-       알고 싶은 것은 우리 데이터의 신뢰 등급이 아니라 뭐가 어디 있느냐다. -->
-  <div class="legend" id="legend">
-    <b>지도 아이콘 — 눌러보세요</b>
-    <div><span class="lg">🍤</span>먹거리</div>
-    <div><span class="lg">🎁</span>굿즈샵</div>
-    <div><span class="lg">🚪</span>출입구</div>
-    <div><span class="lg">🎪</span>이벤트</div>
-  </div>
+  <!-- 범례는 한 줄이면 된다. 핀이 흰 동그라미 버튼이 된 뒤로는 이모지를
+       풀어 설명할 필요가 없고, 정작 알려줘야 할 것은 "눌러도 된다"는 사실이다. -->
+  <div class="legend" id="legend">🍤🎁🚪 눌러보세요 · 구역 배치 개략도</div>
 
   <!-- 구역을 누르면 올라오는 시트 -->
   <section class="sheet" id="sheet" data-open="false" aria-live="polite">

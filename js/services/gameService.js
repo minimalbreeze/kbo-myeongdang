@@ -7,9 +7,30 @@
     return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
   }
 
-  async function all() { return (await window.KboData.games()).games || []; }
+  /* 일정을 어디서 가져오는가.
+     config.gamesProxyUrl이 채워져 있으면 그쪽을 먼저 본다. 실패하면 조용히
+     번들된 파일로 내려간다 — 중계기가 죽었다고 화면까지 죽으면 안 된다. */
+  let cache = null;
 
-  async function statusCodes() { return (await window.KboData.games()).statusCodes; }
+  async function source() {
+    if (cache) return cache;
+    const url = (window.KBO_CONFIG.gamesProxyUrl || '').trim();
+    if (url) {
+      try {
+        const r = await fetch(url, { cache: 'no-store' });
+        if (r.ok) {
+          const d = await r.json();
+          if (d && Array.isArray(d.games)) { cache = d; return cache; }
+        }
+      } catch (e) { /* 번들된 파일로 내려간다 */ }
+    }
+    cache = await window.KboData.games();
+    return cache;
+  }
+
+  async function all() { return (await source()).games || []; }
+
+  async function statusCodes() { return (await source()).statusCodes; }
 
   function statusOf(game, codes) {
     const key = (game && game.status) || 'unknown';

@@ -56,6 +56,50 @@
     unplaced:     { badge: '⚪ 위치 미확인',        cls: '' }
   };
 
+  /* 취향 하나를 켜고 끈다. 기준은 URL에 남겨서, 그 링크를 받은 친구도
+     같은 순위를 본다. 빈 문자열이 오면 전부 끄고 종합으로 돌아간다. */
+  function togglePref(id) {
+    let picked = prefIds();
+    if (!id) {
+      picked = [];                      // "종합" 칩
+    } else {
+      const i = picked.indexOf(id);
+      if (i >= 0) picked.splice(i, 1); else picked.push(id);
+    }
+    if (picked.length) q.set('prefs', picked.join(',')); else q.delete('prefs');
+    history.replaceState(null, '', location.pathname + '?' + q.toString());
+    if (redrawMap) redrawMap();
+    window.KboAnalytics.track('seat_recommend', { stadium: stadium.id, prefs: picked.join(',') });
+  }
+
+  /* ---------- 지도 위 취향 고르기 ----------
+     전에는 "바꾸기"를 눌러 시트를 열어야 기준을 바꿀 수 있었다. 지도를 보다가
+     기준을 바꾸려면 화면을 덮는 시트를 열고 고르고 닫아야 했다는 뜻이다.
+     지도에서 바로 고르게 한다 — 누르면 그 자리에서 메달이 옮겨 붙는다. */
+  function drawPrefBar() {
+    const bar = document.getElementById('rank-bar');
+    const on = prefIds();
+
+    const chips = window.KboRecommend.PREFS.map((p) =>
+      '<button class="pchip" type="button" data-pick="' + p.id + '"' +
+      ' aria-pressed="' + (on.includes(p.id) ? 'true' : 'false') + '">' +
+      p.emoji + ' ' + R.esc(p.label) + '</button>').join('');
+
+    // 아무것도 안 고르면 종합 기준이다. 그걸 "종합" 칩으로 드러낸다.
+    const all = '<button class="pchip pchip-all" type="button" data-pick=""' +
+      ' aria-pressed="' + (on.length ? 'false' : 'true') + '">🥇 종합</button>';
+
+    bar.innerHTML = '<div class="pchips" id="pref-chips">' + all + chips + '</div>';
+    bar.hidden = false;
+
+    // 고른 칩이 줄 바깥으로 밀려 있으면 끌어온다. 눌렀는데 안 보이면
+    // 눌렸는지 알 수가 없다.
+    const active = bar.querySelector('.pchip[aria-pressed="true"]');
+    if (active && active.scrollIntoView) {
+      active.scrollIntoView({ block: 'nearest', inline: 'center' });
+    }
+  }
+
   /* ---------- 지도의 시설 핀 ----------
      아이콘만 찍어두고 이름만 보여주면 지도에 점을 찍은 것에 지나지 않는다.
      누르면 그 자리에서 알아야 할 것이 전부 나와야 한다 — 굿즈샵이면 위치와
@@ -326,6 +370,29 @@
   }
 
   /* ---------- 오늘의 직관(경기 + 날씨 + 구장 정보) ---------- */
+  /* 오늘 경기를 우리가 모를 때.
+
+     KBO는 공개 API를 주지 않는다. "등록된 경기 정보가 아직 없습니다"라는
+     빈 상자는 고장난 것처럼 보이는 데다, 정작 알고 싶은 것(오늘 경기가 있나,
+     취소됐나)에 한 발짝도 다가가지 못한다. 한 번 눌러 답에 닿게 한다. */
+  function gameFallback() {
+    const d = new Date();
+    const WD = ['일', '월', '화', '수', '목', '금', '토'];
+    const today = d.getFullYear() + '년 ' + (d.getMonth() + 1) + '월 ' + d.getDate() +
+      '일 ' + WD[d.getDay()] + '요일';
+    return '<div class="game-fallback">' +
+      '<p class="gf-date">' + R.esc(today) + '</p>' +
+      '<p class="gf-why">경기 편성과 취소 여부는 저희가 단정하지 않습니다. ' +
+      '공식 발표가 가장 빠르고 정확합니다.</p>' +
+      '<a class="btn btn-primary btn-block" href="' + R.esc(CFG.officialStatusUrl) +
+      '" target="_blank" rel="noopener">오늘 경기 일정 확인 ›</a>' +
+      (CFG.ticketUrl
+        ? '<a class="btn btn-ghost btn-block" href="' + R.esc(CFG.ticketUrl) +
+          '" target="_blank" rel="noopener">티켓 예매 ›</a>'
+        : '') +
+      '</div>';
+  }
+
   async function openBriefing() {
     openSheet('<h2>오늘의 직관</h2><div class="empty">불러오는 중…</div>');
     const officialLink = '<a href="' + R.esc(CFG.officialStatusUrl) +
@@ -345,13 +412,13 @@
         const st = window.KboGames.statusOf(game, codes);
         html += '<p><b>' + R.textOr(game.awayName) + ' vs ' + R.textOr(game.homeName) + '</b><br>' +
           R.textOr(game.date) + ' ' + R.textOr(game.time) + '</p>' +
-          '<p><span class="badge">' + R.esc(st.emoji) + ' ' + R.esc(st.label) + '</span></p>';
+          '<p><span class="badge">' + R.esc(st.emoji) + ' ' + R.esc(st.label) + '</span></p>' +
+          '<p class="meta">' + officialLink + '</p>';
       } else {
-        html += R.emptyBox('등록된 경기 정보가 아직 없습니다.');
+        html += gameFallback();
       }
-      html += '<p class="meta">' + officialLink + '</p>';
     } catch (e) {
-      html += '<h3>⚾ 경기</h3>' + R.emptyBox('경기 정보를 불러오지 못했습니다.');
+      html += '<h3>⚾ 경기</h3>' + gameFallback();
     }
 
     // 날씨
@@ -496,15 +563,7 @@
         onZone: openZone,
         onFacility: openPlace
       }, { fanSide: fanSide, ranks: ranks });
-      const basis = prefIds().length
-        ? prefIds().map((id) => (window.KboRecommend.PREFS.find((p) => p.id === id) || {}).label)
-            .filter(Boolean).join(' · ')
-        : '종합';
-      const bar = document.getElementById('rank-bar');
-      bar.innerHTML = '🥇 <b>' + R.esc(basis) + '</b> 기준 명당 1·2·3위 ' +
-        '<button type="button" id="rank-change">바꾸기</button>';
-      bar.hidden = false;
-      document.getElementById('rank-change').addEventListener('click', openRecommend);
+      drawPrefBar();
 
       const b = document.getElementById('side-btn');
       b.textContent = fanSide === 'away' ? '✈️ 원정 팬' : '🏠 홈 팬';
@@ -519,13 +578,6 @@
         drawMap();
         window.KboShare.toast(fanSide === 'away' ? '원정 팬 기준으로 봅니다 ✈️' : '홈 팬 기준으로 봅니다 🏠');
       });
-      // 개략도라는 사실은 범례 안에 둔다 — 화면 위에 떠다니는 글이 하나 줄어든다.
-      if (mapData.schematic) {
-        const note = document.createElement('div');
-        note.style.cssText = 'margin-top:8px;padding-top:8px;border-top:1px solid #e7ecf4;color:#5d6a85';
-        note.textContent = '구역 배치 개략도입니다.';
-        document.getElementById('legend').appendChild(note);
-      }
     } else {
       host.innerHTML = '<div style="color:#cdd8ea;display:grid;place-items:center;height:100%;padding:24px;text-align:center">' +
         '좌석 지도 준비 중입니다.</div>';
@@ -546,19 +598,17 @@
       if (zone) openZone(zone);
     });
 
-    /* 취향 칩. 누르면 순위 기준이 바뀌고 지도의 1·2·3위가 즉시 다시 매겨진다.
-       기준은 URL에 남겨서, 그 링크를 받은 친구도 같은 순위를 본다. */
+    // 시트 안의 취향 칩. 지도 위 칩과 같은 일을 한다.
     body().addEventListener('click', (ev) => {
       const b = ev.target.closest('[data-pick]');
-      if (!b) return;
-      const picked = prefIds();
-      const i = picked.indexOf(b.dataset.pick);
-      if (i >= 0) picked.splice(i, 1); else picked.push(b.dataset.pick);
-      if (picked.length) q.set('prefs', picked.join(',')); else q.delete('prefs');
-      history.replaceState(null, '', location.pathname + '?' + q.toString());
-      if (redrawMap) redrawMap();
-      openRecommend();
-      window.KboAnalytics.track('seat_recommend', { stadium: stadium.id, prefs: picked.join(',') });
+      if (b) { togglePref(b.dataset.pick); openRecommend(); }
+    });
+
+    /* 지도 위 취향 칩. 시트를 열지 않고 바로 고른다.
+       시트가 다시 뜨지 않는 것이 핵심이다 — 지도를 보면서 기준만 바꾸는 것이다. */
+    document.getElementById('rank-bar').addEventListener('click', (ev) => {
+      const b = ev.target.closest('[data-pick]');
+      if (b) togglePref(b.dataset.pick);
     });
 
     // 시트 안 버튼은 위임으로 한 번만 연결한다.

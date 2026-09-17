@@ -260,13 +260,27 @@ async function main() {
       else if (zoneIds.has(z.id)) err(rel, `${at}: id가 중복됩니다.`);
       zoneIds.add(z.id);
       if (!z.name) err(rel, `${at}: name이 없습니다.`);
-      for (const k of ['a0', 'a1', 'r0', 'r1']) {
+      /* 반지름이 아니라 "담장에서부터의 깊이"로 잡는다(d0·d1).
+         홈 뒤는 백네트가 코앞이고 외야는 담장 너머로 멀어서, 같은 반지름의
+         고리로 두르면 과녁판이 되고 관중석이 그라운드를 침범한다. */
+      for (const k of ['a0', 'a1', 'd0', 'd1']) {
         if (typeof z[k] !== 'number') err(rel, `${at}: ${k}가 숫자가 아닙니다.`);
       }
       if (typeof z.a0 === 'number' && (z.a0 < 0 || z.a0 > 360)) err(rel, `${at}: a0는 0~360이어야 합니다.`);
       if (typeof z.a1 === 'number' && (z.a1 < 0 || z.a1 > 360)) err(rel, `${at}: a1은 0~360이어야 합니다.`);
-      if (typeof z.r0 === 'number' && typeof z.r1 === 'number' && z.r0 >= z.r1) {
-        err(rel, `${at}: r0(${z.r0})가 r1(${z.r1})보다 작아야 합니다.`);
+      if (typeof z.d0 === 'number' && typeof z.d1 === 'number' && z.d0 >= z.d1) {
+        err(rel, `${at}: d0(${z.d0})가 d1(${z.d1})보다 작아야 합니다.`);
+      }
+      if (typeof z.d0 === 'number' && z.d0 < 0) {
+        err(rel, `${at}: d0는 0 이상이어야 합니다 — 음수면 관중석이 그라운드 안으로 들어갑니다.`);
+      }
+      // 블록 번호는 확인된 것만 적는다. 지어내지 않는다.
+      if (z.blocks != null) {
+        if (!Array.isArray(z.blocks)) err(rel, `${at}: blocks는 배열이어야 합니다.`);
+        else if (!z.blocks.length) err(rel, `${at}: blocks가 빈 배열입니다. 모르면 넣지 마세요.`);
+        else if (z.blocks.some((b) => typeof b !== 'string' || !b.trim())) {
+          err(rel, `${at}: blocks 항목은 비어 있지 않은 문자열이어야 합니다.`);
+        }
       }
       if (z.side != null && !['home', 'away', 'neutral'].includes(z.side)) {
         err(rel, `${at}: side는 home / away / neutral 중 하나여야 합니다 (${z.side}).`);

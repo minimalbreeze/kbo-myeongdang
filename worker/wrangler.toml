@@ -1,0 +1,6 @@
+name = "kbo-schedule"
+main = "kbo-schedule.js"
+compatibility_date = "2026-09-17"
+
+# 무료 요금제로 충분하다. 10분 캐시가 걸려 있어 KBO를 두들기지 않는다.
+# 커스텀 도메인이 필요하면 Cloudflare 대시보드에서 붙이면 된다.
