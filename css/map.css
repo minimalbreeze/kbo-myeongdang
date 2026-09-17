@@ -159,3 +159,13 @@ ul.detail li { font-size: 14.5px; line-height: 1.6; margin-bottom: 5px; }
   font-size: 12.5px; color: var(--dim); text-decoration: underline;
   text-underline-offset: 3px; cursor: pointer; font-family: inherit;
 }
+
+/* ── 오늘 경기를 모를 때 ──────────────────────────────────
+   빈 상자는 고장난 것처럼 보인다. 한 번 눌러 답에 닿게 한다. */
+.game-fallback {
+  border: 1px solid var(--line); border-radius: 12px;
+  padding: 14px; background: var(--card);
+}
+.gf-date { margin: 0; font-size: 16px; font-weight: 800; }
+.gf-why { margin: 6px 0 12px; font-size: 13.5px; color: var(--dim); line-height: 1.6; }
+.game-fallback .btn + .btn { margin-top: 8px; }

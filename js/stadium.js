@@ -370,6 +370,29 @@
   }
 
   /* ---------- 오늘의 직관(경기 + 날씨 + 구장 정보) ---------- */
+  /* 오늘 경기를 우리가 모를 때.
+
+     KBO는 공개 API를 주지 않는다. "등록된 경기 정보가 아직 없습니다"라는
+     빈 상자는 고장난 것처럼 보이는 데다, 정작 알고 싶은 것(오늘 경기가 있나,
+     취소됐나)에 한 발짝도 다가가지 못한다. 한 번 눌러 답에 닿게 한다. */
+  function gameFallback() {
+    const d = new Date();
+    const WD = ['일', '월', '화', '수', '목', '금', '토'];
+    const today = d.getFullYear() + '년 ' + (d.getMonth() + 1) + '월 ' + d.getDate() +
+      '일 ' + WD[d.getDay()] + '요일';
+    return '<div class="game-fallback">' +
+      '<p class="gf-date">' + R.esc(today) + '</p>' +
+      '<p class="gf-why">경기 편성과 취소 여부는 저희가 단정하지 않습니다. ' +
+      '공식 발표가 가장 빠르고 정확합니다.</p>' +
+      '<a class="btn btn-primary btn-block" href="' + R.esc(CFG.officialStatusUrl) +
+      '" target="_blank" rel="noopener">오늘 경기 일정 확인 ›</a>' +
+      (CFG.ticketUrl
+        ? '<a class="btn btn-ghost btn-block" href="' + R.esc(CFG.ticketUrl) +
+          '" target="_blank" rel="noopener">티켓 예매 ›</a>'
+        : '') +
+      '</div>';
+  }
+
   async function openBriefing() {
     openSheet('<h2>오늘의 직관</h2><div class="empty">불러오는 중…</div>');
     const officialLink = '<a href="' + R.esc(CFG.officialStatusUrl) +
@@ -389,13 +412,13 @@
         const st = window.KboGames.statusOf(game, codes);
         html += '<p><b>' + R.textOr(game.awayName) + ' vs ' + R.textOr(game.homeName) + '</b><br>' +
           R.textOr(game.date) + ' ' + R.textOr(game.time) + '</p>' +
-          '<p><span class="badge">' + R.esc(st.emoji) + ' ' + R.esc(st.label) + '</span></p>';
+          '<p><span class="badge">' + R.esc(st.emoji) + ' ' + R.esc(st.label) + '</span></p>' +
+          '<p class="meta">' + officialLink + '</p>';
       } else {
-        html += R.emptyBox('등록된 경기 정보가 아직 없습니다.');
+        html += gameFallback();
       }
-      html += '<p class="meta">' + officialLink + '</p>';
     } catch (e) {
-      html += '<h3>⚾ 경기</h3>' + R.emptyBox('경기 정보를 불러오지 못했습니다.');
+      html += '<h3>⚾ 경기</h3>' + gameFallback();
     }
 
     // 날씨
