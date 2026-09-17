@@ -52,14 +52,36 @@ gamesProxyUrl: 'https://kbo-schedule.your-subdomain.workers.dev',
 
 `games`에 경기가 들어 있으면 성공입니다.
 
+## 배포 전에 확인해 둔 것
+
+`wrangler dev --local`로 실제로 띄워서 확인했습니다.
+
+- 빌드 통과 (8.8 KiB)
+- `/` `?month=` `?stadium=` `?debug=1` 모두 응답
+- 잘못된 `month` → 400, `OPTIONS` 프리플라이트 → 200
+- CORS·캐시 헤더 정상
+- **KBO가 막혔을 때도 200으로 빈 목록 + 사유를 돌려줍니다** (앱이 죽지 않습니다)
+
+KBO 호출만은 확인하지 못했습니다. 작업 환경에서 그 주소가 막혀 있어
+`?debug=1`이 이렇게 나왔습니다:
+
+```json
+{ "ok": false, "status": 403,
+  "bodyHead": "Host not in allowlist: www.koreabaseball.com ..." }
+```
+
+**막은 것은 작업 환경이지 KBO가 아닙니다.** 요청 자체는 제대로 나갑니다.
+Cloudflare에서는 그 제한이 없으니 실제로 닿습니다.
+
 ## games가 비어 있다면
 
 **이게 가장 있을 법한 문제입니다.** KBO 표의 칸 구성은 직접 불러봐야 알 수
 있는데, 이 코드는 그 확인 없이 쓰였습니다. 생김새로 값을 찾도록(날짜꼴,
 시각꼴, 구장 이름) 만들어서 웬만하면 읽히지만, 어긋날 수 있습니다.
 
-1. `/?debug=1`을 열어 `raw`를 봅니다.
-2. `rows[].row[].Text`에 뭐가 들어 있는지 확인합니다.
+1. `/?debug=1`을 열어 봅니다. 성공이면 `raw`(KBO 원본)와 `parsed`(읽어낸 경기 수)가,
+   실패면 `status`·`error`·`bodyHead`가 나옵니다. 진단할 때는 캐시를 건너뜁니다.
+2. `raw.rows[].row[].Text`에 뭐가 들어 있는지 확인합니다.
 3. `kbo-schedule.js`의 `pickCells()`만 고치면 됩니다. 나머지는 손댈 일이 없습니다.
 4. `node scripts/test-worker.mjs`로 시험합니다. 견본을 실제 모양으로 바꿔
    두면 다음에 또 깨졌을 때 바로 알 수 있습니다.

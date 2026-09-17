@@ -206,6 +206,10 @@ function toGames(payload, year) {
   return out;
 }
 
+/* KBO에 물어본다.
+
+   던지지 않고 결과를 그대로 돌려준다. 실패했을 때 무엇이 왔는지가
+   ?debug=1에서 제일 알고 싶은 것인데, 던져 버리면 그게 사라진다. */
 async function fetchMonth(year, month) {
   const body = new URLSearchParams({
     leId: LE_ID,
@@ -215,18 +219,40 @@ async function fetchMonth(year, month) {
     teamId: ''                                  // 비어 있어도 반드시 보내야 한다
   });
 
-  const res = await fetch(KBO_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-      // 이 두 개가 없으면 KBO가 빈 응답을 준다.
-      'Referer': 'https://www.koreabaseball.com/Schedule/Schedule.aspx',
-      'User-Agent': 'Mozilla/5.0 (compatible; kbo-myeongdang/1.0)'
-    },
-    body
-  });
-  if (!res.ok) throw new Error('KBO 응답 ' + res.status);
-  return res.json();
+  let res;
+  try {
+    res = await fetch(KBO_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        // 이 두 개가 없으면 KBO가 빈 응답을 준다.
+        'Referer': 'https://www.koreabaseball.com/Schedule/Schedule.aspx',
+        'User-Agent': 'Mozilla/5.0 (compatible; kbo-myeongdang/1.0)'
+      },
+      body
+    });
+  } catch (e) {
+    return { ok: false, status: 0, error: '연결 실패: ' + String(e && e.message || e) };
+  }
+
+  const text = await res.text();
+  if (!res.ok) {
+    return {
+      ok: false, status: res.status,
+      error: 'KBO 응답 ' + res.status,
+      // 막힌 이유가 본문에 적혀 있을 때가 많다. 앞부분만 싣는다.
+      bodyHead: text.slice(0, 600)
+    };
+  }
+  try {
+    return { ok: true, status: res.status, payload: JSON.parse(text) };
+  } catch (e) {
+    return {
+      ok: false, status: res.status,
+      error: 'JSON이 아닙니다 — KBO가 HTML을 돌려줬을 수 있습니다.',
+      bodyHead: text.slice(0, 600)
+    };
+  }
 }
 
 /* 표를 읽는 부분만 따로 내보낸다. 이 Worker는 KBO에 직접 물어봐야 확인되는데,
@@ -249,31 +275,45 @@ export default {
       year = +m[1]; month = +m[2];
     }
 
+    const debug = !!url.searchParams.get('debug');
+
     const cache = caches.default;
     const key = new Request(url.origin + url.pathname + '?y=' + year + '&m=' + month,
       { method: 'GET' });
 
-    let payload = null;
-    const hit = await cache.match(key);
+    let payload = null, failed = null;
+    const hit = debug ? null : await cache.match(key);   // 진단할 때는 캐시를 건너뛴다
     if (hit) {
       payload = await hit.json();
     } else {
-      try {
-        payload = await fetchMonth(year, month);
-      } catch (e) {
-        /* KBO가 죽어도 앱은 살아야 한다. 앱은 games가 비면 공식 발표 링크를
-           보여주므로, 오류를 200으로 돌려주되 무슨 일인지 적어 둔다. */
-        return json({
-          games: [], statusCodes: STATUS_CODES, updatedAt: new Date().toISOString(),
-          error: String(e && e.message || e)
-        });
+      const got = await fetchMonth(year, month);
+      if (got.ok) {
+        payload = got.payload;
+        if (!debug) await cache.put(key, json(payload));
+      } else {
+        failed = got;
       }
-      await cache.put(key, json(payload));
     }
 
-    if (url.searchParams.get('debug')) {
-      // 파싱을 고칠 때 쓴다. KBO가 준 것을 그대로 보여준다.
-      return json({ year, month, raw: payload });
+    /* 파싱이나 접속을 고칠 때 쓴다. 성공하면 KBO가 준 것을, 실패하면 왜
+       실패했는지를 보여준다. 정작 알고 싶은 순간은 실패했을 때다. */
+    if (debug) {
+      return json(failed
+        ? { year, month, ok: false, status: failed.status,
+            error: failed.error, bodyHead: failed.bodyHead || null,
+            url: KBO_URL,
+            sent: { leId: LE_ID, srIdList: SR_ID_LIST, seasonId: year, gameMonth: pad(month) } }
+        : { year, month, ok: true, parsed: toGames(payload, year).length, raw: payload });
+    }
+
+    if (failed) {
+      /* KBO가 죽어도 앱은 살아야 한다. 앱은 games가 비면 공식 발표 링크를
+         보여주므로, 오류를 200으로 돌려주되 무슨 일인지 적어 둔다. */
+      return json({
+        games: [], statusCodes: STATUS_CODES, updatedAt: new Date().toISOString(),
+        error: failed.error,
+        hint: '자세한 내용은 ?debug=1 을 열어보세요.'
+      });
     }
 
     let games = toGames(payload, year);
