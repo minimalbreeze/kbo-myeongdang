@@ -226,29 +226,36 @@
         g.appendChild(pin);
       }
 
-      // 두꺼운 띠에만 보조 배지를 넣는다. 얇은 곳은 범례와 시트가 대신 알려준다.
-      if (!z.verified && band > 70) {
-        const badge = el('text', {
-          x: c[0].toFixed(1), y: (c[1] + size + 4).toFixed(1), 'text-anchor': 'middle',
-          'dominant-baseline': 'middle', fill: '#ffffff', 'font-size': '12.5',
-          'pointer-events': 'none', opacity: '0.75'
-        });
-        badge.textContent = '확인 중';
-        g.appendChild(badge);
-      }
     });
   }
 
+  /* 시설 핀.
+     이모지만 덩그러니 찍어두면 지도 장식처럼 보여서 아무도 누르지 않는다.
+     밝은 동그라미 위에 얹어 "누르는 것"으로 만들고, 손가락이 닿을 만한
+     크기(반지름 19)로 키운다. */
   function drawFacilities(g, map, onPick) {
     (map.facilities || []).forEach((f) => {
+      const pin = el('g', {
+        style: 'cursor:pointer', 'data-facility': f.id,
+        tabindex: '0', role: 'button', 'aria-label': f.name + ' 안내 보기'
+      });
+      pin.appendChild(el('circle', {
+        cx: f.x, cy: f.y, r: '19', fill: '#ffffff', opacity: '0.94',
+        stroke: '#1d3460', 'stroke-width': '1.5'
+      }));
       const mark = el('text', {
-        x: f.x, y: f.y, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
-        'font-size': '26', style: 'cursor:pointer', 'data-facility': f.id,
-        tabindex: '0', role: 'button', 'aria-label': f.name
+        x: f.x, y: f.y, 'text-anchor': 'middle', 'dominant-baseline': 'central',
+        'font-size': '21', 'pointer-events': 'none'
       });
       mark.textContent = f.emoji || '📍';
-      mark.addEventListener('click', (ev) => { ev.stopPropagation(); onPick(f); });
-      g.appendChild(mark);
+      pin.appendChild(mark);
+
+      const fire = (ev) => { ev.preventDefault(); ev.stopPropagation(); onPick(f); };
+      pin.addEventListener('click', fire);
+      pin.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter' || ev.key === ' ') fire(ev);
+      });
+      g.appendChild(pin);
     });
   }
 
@@ -267,21 +274,50 @@
                y: view.y + ((e.clientY - r.top) / r.height) * view.h };
     };
 
+    /* 손가락을 대자마자 포인터를 붙잡으면 안 된다.
+
+       setPointerCapture를 누르는 즉시 걸었더니, 그 뒤의 click 이벤트가 원래
+       눌린 구역이 아니라 svg로 전달됐다. 구역 폴리곤과 시설 핀에 달아둔 click
+       리스너가 아예 불리지 않아서, 지도를 눌러도 아무 일도 안 일어났다.
+
+       끌기가 실제로 시작된 뒤에 붙잡는다. 손가락이 6px 넘게 움직이면 그때부터
+       끌기로 보고, 그 전까지는 그냥 탭이다. */
+    const DRAG = 6;
+    let dragging = false, down = null;
+
     svg.addEventListener('pointerdown', (e) => {
       pointers.set(e.pointerId, e);
-      svg.setPointerCapture(e.pointerId);
-      if (pointers.size === 1) last = { cx: e.clientX, cy: e.clientY };
+      if (pointers.size === 1) {
+        down = { cx: e.clientX, cy: e.clientY, id: e.pointerId };
+        last = null;
+      }
       if (pointers.size === 2) {
+        // 손가락 두 개는 곧장 확대·축소다. 탭일 리 없으니 바로 붙잡는다.
+        beginDrag(e);
         const [a, b] = [...pointers.values()];
         startDist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
         startW = view.w;
       }
     });
 
+    function beginDrag(e) {
+      if (dragging) return;
+      dragging = true;
+      try { svg.setPointerCapture(e.pointerId); } catch (err) { /* 이미 놓친 포인터 */ }
+    }
+
     svg.addEventListener('pointermove', (e) => {
       if (!pointers.has(e.pointerId)) return;
       pointers.set(e.pointerId, e);
       const r = svg.getBoundingClientRect();
+
+      // 문턱을 넘기 전에는 아무것도 하지 않는다 — 손가락은 늘 조금씩 흔들린다.
+      if (pointers.size === 1 && !dragging) {
+        if (!down) return;
+        if (Math.hypot(e.clientX - down.cx, e.clientY - down.cy) < DRAG) return;
+        beginDrag(e);
+        last = { cx: down.cx, cy: down.cy };
+      }
 
       if (pointers.size === 2) {
         const [a, b] = [...pointers.values()];
@@ -304,7 +340,9 @@
     const end = (e) => {
       pointers.delete(e.pointerId);
       if (pointers.size < 2) startDist = 0;
-      if (!pointers.size) last = null;
+      if (!pointers.size) {
+        last = null; down = null; dragging = false;
+      }
     };
     svg.addEventListener('pointerup', end);
     svg.addEventListener('pointercancel', end);
