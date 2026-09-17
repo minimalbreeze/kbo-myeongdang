@@ -41,10 +41,10 @@ html, body.map-page { height: 100%; margin: 0; overflow: hidden; }
 
 .legend {
   position: absolute; left: 12px; z-index: 20;
-  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
-  background: rgba(255,255,255,.95); border-radius: 12px;
-  padding: 10px 12px; font-size: 11.5px; line-height: 1.7;
-  box-shadow: 0 2px 10px rgba(0,0,0,.18); max-width: 60vw;
+  bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+  background: rgba(255,255,255,.92); border-radius: 999px;
+  padding: 7px 14px; font-size: 11.5px; line-height: 1.4; color: #3d4a63;
+  box-shadow: 0 2px 10px rgba(0,0,0,.18); white-space: nowrap;
 }
 .legend b { display: block; font-size: 11px; color: #5d6a85; margin-bottom: 2px; }
 .legend .sw {
@@ -80,18 +80,36 @@ html, body.map-page { height: 100%; margin: 0; overflow: hidden; }
 .sheet .inner { max-width: 720px; margin: 0 auto; }
 
 /* 무엇을 기준으로 1·2·3위를 매겼는지 — 지도 위에 항상 보인다 */
+/* ── 지도 위 취향 고르기 ──────────────────────────────────
+   시트를 열지 않고 지도에서 바로 고른다. 칩이 여섯 개 + 종합이라
+   좁은 화면에서는 가로로 밀어서 본다. */
 .rank-bar {
+  /* 위쪽은 오른쪽 버튼 더미와 부딪힌다. 무엇보다 자주 누르는 것이니
+     엄지가 닿는 화면 아래에 둔다. */
   position: absolute; z-index: 20;
-  top: calc(62px + env(safe-area-inset-top, 0px)); left: 12px; right: 150px;
-  background: rgba(255, 255, 255, .95); border-radius: 999px;
-  padding: 8px 14px; font-size: 12.5px; color: #132844;
-  box-shadow: 0 2px 10px rgba(0,0,0,.25); line-height: 1.4;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  left: 0; right: 0;
 }
-.rank-bar b { font-weight: 800; }
-.rank-bar button {
-  border: 0; background: none; color: #d81f34; font: inherit;
-  font-weight: 800; text-decoration: underline; cursor: pointer; padding: 0 0 0 4px;
+.pchips {
+  display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none;
+  padding: 2px 12px 6px;
+  -webkit-overflow-scrolling: touch;
 }
+.pchips::-webkit-scrollbar { display: none; }
+.pchip {
+  flex: 0 0 auto; cursor: pointer;
+  border: 0; border-radius: 999px;
+  padding: 8px 13px; font: inherit; font-size: 13px; font-weight: 700;
+  white-space: nowrap; color: #132844;
+  background: rgba(255,255,255,.95);
+  box-shadow: 0 2px 8px rgba(0,0,0,.25);
+}
+.pchip[aria-pressed="true"] {
+  background: #d81f34; color: #fff;
+  box-shadow: 0 2px 10px rgba(216,31,52,.45);
+}
+/* 지도 오른쪽 버튼 더미와 겹치지 않게 칩 줄 끝에 여백을 둔다. */
+.pchips::after { content: ''; flex: 0 0 8px; }
 
 /* ── 이 구역 어디에 앉을까 ────────────────────────────────
    구역 하나를 통째로 명당이라고 하지 않는다. 블록과 열까지 내려간 목록. */
