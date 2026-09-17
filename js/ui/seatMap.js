@@ -49,6 +49,53 @@
     return pt(cx, cy, (r0 + r1) / 2, a0 + span / 2);
   }
 
+  /* 구장 윤곽 — 그라운드 경계까지의 거리.
+
+     관중석을 홈에서 같은 반지름의 고리로 두르면 과녁판이 된다. 실제 구장은
+     홈 뒤에 백네트가 코앞에 붙어 있고 외야는 담장 너머로 멀다. 그 윤곽을
+     따라 앉혀야 구단이 주는 좌석배치도처럼 읽힌다.
+
+     0도가 중견수, 180도가 홈 뒤다. 좌우 대칭으로 꺾은선을 그린다. */
+  const BOWL = [[0, 330], [45, 272], [90, 152], [135, 88], [180, 58]];
+
+  function bowlAt(a) {
+    let k = ((a % 360) + 360) % 360;
+    if (k > 180) k = 360 - k;
+    for (let i = 1; i < BOWL.length; i++) {
+      if (k <= BOWL[i][0]) {
+        const p0 = BOWL[i - 1], p1 = BOWL[i];
+        return p0[1] + (p1[1] - p0[1]) * (k - p0[0]) / (p1[0] - p0[0]);
+      }
+    }
+    return BOWL[BOWL.length - 1][1];
+  }
+
+  /* 구장 윤곽을 따라가는 띠. 안쪽·바깥쪽 반지름이 각도마다 달라지므로
+     sectorPath 대신 점을 이어 그린다. */
+  function bandPath(cx, cy, d0, d1, a0, a1) {
+    let span = a1 - a0;
+    if (span <= 0) span += 360;
+    const steps = Math.max(2, Math.ceil(span / 3));
+    const outer = [], inner = [];
+    for (let i = 0; i <= steps; i++) {
+      const a = a0 + (span * i) / steps;
+      const b = bowlAt(a);
+      outer.push(pt(cx, cy, b + d1, a));
+      inner.push(pt(cx, cy, b + d0, a));
+    }
+    const s2 = (p) => p[0].toFixed(1) + ' ' + p[1].toFixed(1);
+    return 'M' + s2(outer[0]) + outer.slice(1).map((p) => ' L' + s2(p)).join('') +
+      ' L' + s2(inner[inner.length - 1]) +
+      inner.slice().reverse().slice(1).map((p) => ' L' + s2(p)).join('') + ' Z';
+  }
+
+  function bandCentroid(cx, cy, d0, d1, a0, a1) {
+    let span = a1 - a0;
+    if (span <= 0) span += 360;
+    const a = a0 + span / 2;
+    return pt(cx, cy, bowlAt(a) + (d0 + d1) / 2, a);
+  }
+
   /* ---------- 경기장(맥락용 그림) ---------- */
   /* 빛 연출.
      한강 불꽃축제 명당지도는 까만 지도 위에서 불꽃이 터지고 그 주위로 빛의 고리가
@@ -95,53 +142,95 @@
     });
   }
 
+  /* 그라운드.
+
+     전에는 금빛 원을 깔고 다이아몬드 윤곽만 얹었다. 예쁘긴 한데 구단이 주는
+     좌석배치도와 닮은 구석이 없어서, 어디가 1루이고 어디가 외야인지 모양으로
+     읽히지 않았다. 위에서 내려다본 야구장을 제대로 그린다 —
+     외야 잔디, 내야 흙, 베이스 사이 잔디, 파울라인, 베이스, 마운드. */
   function drawField(g, map) {
     const { x: cx, y: cy } = map.home;
     const wall = map.field.wallRadius;
     const base = map.field.baseRadius;
 
-    // 외야 잔디: 파울라인(±45도) 안쪽만
-    const [lx, ly] = pt(cx, cy, wall, -45);
-    const [rx, ry] = pt(cx, cy, wall, 45);
-    // 그라운드에서 퍼지는 빛. 이 화면에서 가장 밝은 곳이 "모두가 보려는 그것"이어야 한다.
-    const glowR = wall * 1.15;
-    const gpts = [];
-    for (let a = 0; a < 360; a += 6) gpts.push(pt(cx, cy, glowR, a));
-    g.appendChild(el('path', {
-      d: gpts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ') + ' Z',
-      fill: 'url(#kbo-burst)', 'pointer-events': 'none'
-    }));
+    const poly = (pts, attrs) => g.appendChild(el('polygon', Object.assign({
+      points: pts.map((p) => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')
+    }, attrs)));
 
-    // 기울여 볼 때 외야 잔디는 타원으로 눌린다. 호를 직접 그리는 대신
-    // 점을 이어 그려야 눌린 모양이 맞는다.
-    const arc = [];
-    for (let a = -45; a <= 45; a += 3) arc.push(pt(cx, cy, wall, a));
-    const home = pt(cx, cy, 0, 0);
-    g.appendChild(el('path', {
-      d: 'M' + home[0].toFixed(1) + ' ' + home[1].toFixed(1) + ' ' +
-         arc.map((p) => 'L' + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ') + ' Z',
-      fill: '#2f7d4f', opacity: '0.30'
-    }));
+    // 외야 잔디 — 홈에서 담장까지 부채꼴. 파울라인 바깥은 그라운드가 아니다.
+    const fan = [pt(cx, cy, 0, 0)];
+    for (let a = -45; a <= 45; a += 2) fan.push(pt(cx, cy, bowlAt(a), a));
+    poly(fan, { fill: '#2e7a4d' });
 
-    // 내야 흙
-    g.appendChild(el('path', {
-      d: sectorPath(cx, cy, 0, base, -45, 45),
-      fill: '#b98a5a', opacity: '0.45'
-    }));
+    // 담장 앞 워닝트랙
+    const wt = [];
+    for (let a = -45; a <= 45; a += 2) wt.push(pt(cx, cy, bowlAt(a), a));
+    for (let a = 45; a >= -45; a -= 2) wt.push(pt(cx, cy, bowlAt(a) - 14, a));
+    poly(wt, { fill: '#a97b51', opacity: '0.9' });
 
-    // 베이스 다이아몬드
-    const d1 = pt(cx, cy, base * 0.72, -45), d2 = pt(cx, cy, base * 0.72, 0), d3 = pt(cx, cy, base * 0.72, 45);
-    g.appendChild(el('polygon', {
-      points: [home, d1, d2, d3].map((p) => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' '),
-      fill: 'none', stroke: '#ffffff', 'stroke-width': '2.5', opacity: '0.75'
-    }));
+    /* 내야 흙. 실제로는 홈에서 일정 거리까지가 흙이고 그 경계가 호를 그린다.
+       그 안쪽에 다시 베이스 사이 잔디가 있다. */
+    const dirt = [pt(cx, cy, 0, 0)];
+    for (let a = -48; a <= 48; a += 2) dirt.push(pt(cx, cy, base, a));
+    poly(dirt, { fill: '#b98a5a' });
 
-    const label = el('text', {
-      x: cx, y: pt(cx, cy, wall * 0.55, 0)[1], 'text-anchor': 'middle',
-      fill: '#ffffff', opacity: '0.55', 'font-size': '22', 'font-weight': '700'
+    // 베이스 다이아몬드 안쪽 잔디
+    const D = base * 0.62;
+    const first = pt(cx, cy, D, 45), second = pt(cx, cy, D * 1.34, 0), third = pt(cx, cy, D, -45);
+    const homeP = pt(cx, cy, 0, 0);
+    const inset = 0.80;
+    const ig = [
+      pt(cx, cy, D * 0.30, 0),
+      [homeP[0] + (first[0] - homeP[0]) * inset, homeP[1] + (first[1] - homeP[1]) * inset],
+      [second[0] * inset + homeP[0] * (1 - inset), second[1] * inset + homeP[1] * (1 - inset)],
+      [homeP[0] + (third[0] - homeP[0]) * inset, homeP[1] + (third[1] - homeP[1]) * inset]
+    ];
+    // 다이아몬드 안쪽 잔디는 네 꼭짓점을 조금씩 당긴 마름모다.
+    poly([
+      [homeP[0], homeP[1] - (homeP[1] - second[1]) * 0.10],
+      [first[0] - (first[0] - homeP[0]) * 0.16, first[1] - (first[1] - homeP[1]) * 0.16],
+      [second[0], second[1] + (homeP[1] - second[1]) * 0.10],
+      [third[0] - (third[0] - homeP[0]) * 0.16, third[1] - (third[1] - homeP[1]) * 0.16]
+    ], { fill: '#2e7a4d' });
+
+    // 파울라인
+    [[-45, '3루'], [45, '1루']].forEach(([a]) => {
+      const e = pt(cx, cy, bowlAt(a), a);
+      g.appendChild(el('line', {
+        x1: cx, y1: cy, x2: e[0].toFixed(1), y2: e[1].toFixed(1),
+        stroke: '#ffffff', 'stroke-width': '2', opacity: '0.85'
+      }));
     });
-    label.textContent = '외야';
-    g.appendChild(label);
+
+    // 베이스와 마운드
+    [first, second, third].forEach((b) => {
+      g.appendChild(el('rect', {
+        x: (b[0] - 5).toFixed(1), y: (b[1] - 5).toFixed(1), width: '10', height: '10',
+        fill: '#ffffff', transform: 'rotate(45 ' + b[0].toFixed(1) + ' ' + b[1].toFixed(1) + ')'
+      }));
+    });
+    const mound = pt(cx, cy, D * 0.72, 0);
+    g.appendChild(el('circle', {
+      cx: mound[0].toFixed(1), cy: mound[1].toFixed(1), r: '11',
+      fill: '#b98a5a', stroke: '#c9a077', 'stroke-width': '1'
+    }));
+    // 홈플레이트
+    g.appendChild(el('circle', { cx: cx, cy: cy, r: '5', fill: '#ffffff' }));
+
+    // 방향 글자 — 배치도를 볼 때 제일 먼저 찾는 것이 1루·3루다.
+    const tag = (r, a, t, size) => {
+      const p = pt(cx, cy, r, a);
+      const e = el('text', {
+        x: p[0].toFixed(1), y: p[1].toFixed(1), 'text-anchor': 'middle',
+        'dominant-baseline': 'central', fill: '#ffffff', opacity: '0.8',
+        'font-size': String(size), 'font-weight': '800', 'pointer-events': 'none'
+      });
+      e.textContent = t;
+      g.appendChild(e);
+    };
+    tag(bowlAt(0) * 0.62, 0, '외야', 22);
+    tag(base * 1.35, 36, '1루', 15);
+    tag(base * 1.35, -36, '3루', 15);
   }
 
   /* ---------- 구역 ---------- */
@@ -164,57 +253,110 @@
     return z.side === fanSide;
   }
 
+  /* 구역을 블록 칸으로 나눠 그린다.
+
+     전에는 구역 하나를 통짜 띠로 칠했다. 그래서 과녁판처럼 보였고, 구단이
+     주는 좌석배치도와 닮은 데가 없었다. 실제 배치도는 118·119·120…이 저마다
+     칸으로 나뉘어 있고, 그 칸을 보고 표를 고른다.
+
+     블록 번호를 아는 구역은 그 수만큼 나누고 번호를 적는다. 모르는 구역도
+     칸으로는 나눈다 — 번호 없이 두더라도 "여러 블록이 늘어선 곳"이라는 것은
+     사실이고, 통짜 띠보다 실제에 가깝다. 없는 번호를 지어내지는 않는다. */
   function drawZones(g, map, onPick, fanSide, ranks) {
     const { x: cx, y: cy } = map.home;
+
     map.zones.forEach((z) => {
-      const st = STYLE[z.verified ? 'verified' : (z.confidence || 'unplaced')] || STYLE.unplaced;
       const rank = ranks && ranks[z.id];
       // 순위 밖 구역은 흐리게 — 1·2·3위가 한눈에 들어와야 한다.
-      const dim = (ranks && Object.keys(ranks).length && !rank) ? 0.42 : 1;
-      const path = el('path', {
-        d: sectorPath(cx, cy, z.r0, z.r1, z.a0, z.a1),
-        fill: st.fill, 'fill-opacity': (st.op * dim).toFixed(2),
-        stroke: '#ffffff', 'stroke-width': '2', 'stroke-dasharray': st.dash,
-        'data-zone': z.id, tabindex: '0', role: 'button',
-        'aria-label': z.name + (z.verified ? ' (확인됨)' : ' (확인 중)') +
-          (z.side === 'home' ? ' 홈 응원석' : z.side === 'away' ? ' 원정 응원석' : ''),
-        style: 'cursor:pointer'
-      });
-      const pick = (ev) => { ev.preventDefault(); ev.stopPropagation(); onPick(z); };
-      path.addEventListener('click', pick);
-      path.addEventListener('keydown', (ev) => {
-        if (ev.key === 'Enter' || ev.key === ' ') pick(ev);
-      });
-      g.appendChild(path);
+      const dim = (ranks && Object.keys(ranks).length && !rank) ? 0.45 : 1;
+      const fill = z.fill || '#2d4470';
 
-      // 띠가 얇은 구역에서 글자가 넘치지 않도록 두께에 맞춰 크기를 정한다.
-      const band = z.r1 - z.r0;
-      const size = Math.max(13, Math.min(22, band * 0.42));
-      const c = centroid(cx, cy, z.r0, z.r1, z.a0, z.a1);
+      let span = z.a1 - z.a0;
+      if (span <= 0) span += 360;
+
+      const d0 = z.d0 != null ? z.d0 : 8;
+      const d1 = z.d1 != null ? z.d1 : 60;
+      const blocks = z.blocks || null;
+      // 번호를 모르면 칸 크기가 비슷해 보이도록 각도로 나눈다.
+      const n = blocks ? blocks.length : Math.max(2, Math.round(span / 13));
+      const gap = Math.min(1.2, span / n * 0.12);      // 칸 사이 틈
+
+      const cell = (i) => {
+        const a0 = z.a0 + (span * i) / n + gap / 2;
+        const a1 = z.a0 + (span * (i + 1)) / n - gap / 2;
+        return { a0, a1 };
+      };
+
+      const pick = (ev) => { ev.preventDefault(); ev.stopPropagation(); onPick(z); };
+
+      for (let i = 0; i < n; i++) {
+        const { a0, a1 } = cell(i);
+        const path = el('path', {
+          d: bandPath(cx, cy, d0, d1, a0, a1),
+          fill: fill, 'fill-opacity': String(dim),
+          stroke: '#0d1a2e', 'stroke-width': '1.2',
+          'data-zone': z.id, tabindex: i === 0 ? '0' : '-1',
+          role: 'button', style: 'cursor:pointer',
+          'aria-label': z.name + (blocks ? ' ' + blocks[i] + '블록' : '') +
+            (z.side === 'home' ? ' 홈 응원석' : z.side === 'away' ? ' 원정 응원석' : '')
+        });
+        path.addEventListener('click', pick);
+        path.addEventListener('keydown', (ev) => {
+          if (ev.key === 'Enter' || ev.key === ' ') pick(ev);
+        });
+        g.appendChild(path);
+
+        // 블록 번호. 칸이 좁으면 글자가 넘치므로 칸 크기를 보고 정한다.
+        if (blocks) {
+          // 번호는 띠 안쪽에, 등급 이름은 바깥쪽에 — 서로 비켜 앉는다.
+          const nd = d0 + (d1 - d0) * 0.30;
+          const c = bandCentroid(cx, cy, nd, nd, a0, a1);
+          const rr = bowlAt((a0 + a1) / 2) + nd;
+          const w = (a1 - a0) * Math.PI / 180 * rr;                    // 칸의 호 길이
+          const fs = Math.max(9, Math.min(15, Math.min(w * 0.42, (d1 - d0) * 0.3)));
+          if (fs >= 9) {
+            const t = el('text', {
+              x: c[0].toFixed(1), y: c[1].toFixed(1), 'text-anchor': 'middle',
+              'dominant-baseline': 'central', fill: z.ink || '#fff',
+              'font-size': fs.toFixed(1), 'font-weight': '700',
+              'pointer-events': 'none', opacity: String(0.92 * dim)
+            });
+            t.textContent = blocks[i];
+            g.appendChild(t);
+          }
+        }
+      }
+
+      /* 구역 이름은 칸 위에 얹는다. 배치도에서 등급 이름은 블록 번호보다
+         크게, 띠 전체에 걸쳐 적혀 있다. */
+      const band = d1 - d0;
+      const size = Math.max(13, Math.min(21, band * 0.40));
+      const label = z.mapLabel || z.name;
+      /* 블록 번호가 있는 구역은 이름을 띠 바깥쪽으로 밀어 번호와 비켜 앉힌다.
+         가운데에 두면 굵은 이름이 번호를 덮어버려서, 정작 배치도에서 제일
+         쓸모 있는 것이 안 보인다. 띠 밖으로 완전히 빼면 화면을 벗어난다. */
+      const ld = blocks ? d0 + (d1 - d0) * 0.82 : (d0 + d1) / 2;
+      const c = bandCentroid(cx, cy, ld, ld, z.a0, z.a1);
+
       const t = el('text', {
         x: c[0].toFixed(1), y: c[1].toFixed(1), 'text-anchor': 'middle',
         'dominant-baseline': 'middle', fill: '#ffffff',
         'font-size': size.toFixed(0), 'font-weight': '800', 'pointer-events': 'none',
-        opacity: z.verified ? '1' : '0.9'
+        stroke: '#0d1a2e', 'stroke-width': '3.5', 'paint-order': 'stroke',
+        opacity: String(dim)
       });
-      // 명당은 지도에서 바로 눈에 띄어야 한다 — 이 앱의 이름이 명당지도다.
-      t.textContent = z.mapLabel || z.name;
+      t.textContent = label;
       g.appendChild(t);
 
-      // 명당은 배지가 아니라 핀으로 세운다. 불꽃축제 지도에서 명당이 핀으로
-      // 꽂혀 있듯이, 이 화면에서도 "여기다" 하고 가리키는 것이 있어야 한다.
+      // 명당은 배지가 아니라 핀으로 세운다.
       if (rank && rank <= 3) {
-        // 글자 폭을 재지 않고도 겹치지 않게, 라벨 길이에서 대략의 폭을 잡아
-        // 그 왼쪽에 세운다. 위에 두면 바로 윗 띠와 겹친다.
-        const label = z.mapLabel || z.name;
         // 한글은 글자 하나가 글꼴 크기와 거의 같은 폭을 차지한다.
-        // 0.62로 잡았더니 핀이 글자를 덮었다.
         const half = label.length * size * 0.5 * 0.98;
         const px = c[0] - half - size * 0.95;
         const pin = el('g', { 'pointer-events': 'none', filter: 'url(#kbo-glow)' });
         pin.appendChild(el('circle', {
           cx: px.toFixed(1), cy: c[1].toFixed(1), r: (size * 0.64).toFixed(1),
-          fill: rank === 1 ? '#ffd27a' : rank === 2 ? '#dde4ef' : '#e2a874', opacity: '1'
+          fill: rank === 1 ? '#ffd27a' : rank === 2 ? '#dde4ef' : '#e2a874'
         }));
         const m = el('text', {
           x: px.toFixed(1), y: c[1].toFixed(1),
@@ -225,14 +367,9 @@
         pin.appendChild(m);
         g.appendChild(pin);
       }
-
     });
   }
 
-  /* 시설 핀.
-     이모지만 덩그러니 찍어두면 지도 장식처럼 보여서 아무도 누르지 않는다.
-     밝은 동그라미 위에 얹어 "누르는 것"으로 만들고, 손가락이 닿을 만한
-     크기(반지름 19)로 키운다. */
   function drawFacilities(g, map, onPick) {
     (map.facilities || []).forEach((f) => {
       const pin = el('g', {
