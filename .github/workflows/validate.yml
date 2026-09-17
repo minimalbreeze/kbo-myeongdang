@@ -8,9 +8,9 @@ name: 데이터 검사
 on:
   push:
     branches: [main]
-    paths: ['data/**', 'js/**', 'scripts/**', '.github/workflows/validate.yml']
+    paths: ['data/**', 'js/**', 'scripts/**', 'worker/**', '.github/workflows/validate.yml']
   pull_request:
-    paths: ['data/**', 'js/**', 'scripts/**', '.github/workflows/validate.yml']
+    paths: ['data/**', 'js/**', 'scripts/**', 'worker/**', '.github/workflows/validate.yml']
   workflow_dispatch:
 
 jobs:
@@ -26,3 +26,8 @@ jobs:
 
       - name: 추천 알고리즘 테스트
         run: node scripts/test-recommend.mjs
+
+      # 중계기는 KBO에 직접 물어봐야 확인되지만, 받은 표를 옮기는 부분은
+      # 그것 없이도 시험할 수 있다. KBO가 표를 바꾸면 여기가 먼저 빨개진다.
+      - name: 일정 중계기 표 읽기 테스트
+        run: node scripts/test-worker.mjs
