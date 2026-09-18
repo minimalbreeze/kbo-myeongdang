@@ -31,3 +31,8 @@ jobs:
       # 그것 없이도 시험할 수 있다. KBO가 표를 바꾸면 여기가 먼저 빨개진다.
       - name: 일정 중계기 표 읽기 테스트
         run: node scripts/test-worker.mjs
+
+      # 일정 받기는 아무도 안 볼 때 돌면서 저장소에 커밋한다.
+      # KBO 없이 확인할 수 있는 것은 전부 여기서 막는다.
+      - name: 일정 받기 테스트
+        run: node scripts/test-fetch-games.mjs

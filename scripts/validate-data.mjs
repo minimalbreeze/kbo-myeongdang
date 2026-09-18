@@ -181,7 +181,8 @@ async function main() {
   for (const g of games.games || []) {
     const at = `games[${g.date || '?'} ${g.time || ''} ${g.stadiumId || ''}]`;
     if (!isYmd(g.date)) err('games.json', `${at}: date가 YYYY-MM-DD가 아닙니다.`);
-    if (!isHm(g.time)) err('games.json', `${at}: time이 HH:MM이 아닙니다.`);
+    // 시각은 없을 수 있다(더블헤더 2차전 등 미정). 있으면 모양을 본다.
+    if (g.time != null && !isHm(g.time)) err('games.json', `${at}: time이 HH:MM이 아닙니다.`);
     refStadium('games.json', at, g.stadiumId);
     if (g.status != null && !statusCodes.includes(g.status)) {
       err('games.json', `${at}: 모르는 status "${g.status}" (가능: ${statusCodes.join(', ')})`);

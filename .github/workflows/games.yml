@@ -1,0 +1,56 @@
+name: 경기 일정 받기
+
+# 왜 여기서 받는가
+#   KBO는 공개 API를 주지 않는다. data/games.json은 사람이 채우는 파일이었고,
+#   비어 있으면 "오늘 경기 정보 없음"이 뜨고, 손으로 적어도 하루면 틀렸다.
+#
+#   중계기(worker/)를 세우면 실시간이 되지만 Cloudflare 계정·설치·배포·설정이
+#   필요하다. 일정 하나 띄우자고 치르기엔 비싸다. 이 저장소는 이미 Actions로
+#   돌고 Pages로 나간다. 그러면 Actions가 받아서 커밋하면 된다.
+#   설치할 것도, 넣을 주소도 없다.
+#
+#   덤: 무엇이 언제 바뀌었는지가 커밋으로 남는다.
+
+on:
+  schedule:
+    # 한국시간 06:10과 17:10. 아침에 그날 편성을 받고, 저녁 경기 직전에 한 번 더.
+    # (러너는 UTC로 돈다. 21:10 UTC = 06:10 KST, 08:10 UTC = 17:10 KST)
+    - cron: '10 21 * * *'
+    - cron: '10 8 * * *'
+  workflow_dispatch:
+
+# 봇이 스스로 커밋한다. 그 이상은 주지 않는다.
+permissions:
+  contents: write
+
+concurrency:
+  group: games
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: KBO 일정 받기
+        run: node scripts/fetch-games.mjs
+
+      # 받은 것을 그대로 믿지 않는다. 검사를 통과해야 커밋한다.
+      - name: 데이터 검사
+        run: node scripts/validate-data.mjs
+
+      - name: 바뀌었으면 커밋
+        run: |
+          if git diff --quiet -- data/games.json; then
+            echo "바뀐 것이 없습니다."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/games.json
+          git commit -m "경기 일정 갱신 (자동)"
+          git push
