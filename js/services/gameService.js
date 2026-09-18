@@ -46,7 +46,7 @@
     const today = ymd(new Date());
     const list = (await all())
       .filter((g) => g.stadiumId === stadiumId && g.date >= today)
-      .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+      .sort((a, b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')));
     return limit ? list.slice(0, limit) : list;
   }
 

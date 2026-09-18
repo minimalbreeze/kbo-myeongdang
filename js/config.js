@@ -21,13 +21,17 @@ window.KBO_CONFIG = {
 
   /* 경기 상태는 우리가 단정하지 않는다. 항상 공식 발표로 보낸다(지시서 13번).
 
-     KBO는 공개 API를 주지 않는다. data/games.json은 사람이 채우는 큐레이션
-     파일이라 비어 있기 쉽고, 하루만 지나도 틀린다. 그래서 일정이 없을 때는
-     "정보 없음"으로 끝내지 않고 공식 일정과 예매처로 한 번에 보낸다.
+     KBO는 공개 API를 주지 않는다. 그래서 일정은 GitHub Actions가 하루 두 번
+     KBO 공식 일정을 받아 data/games.json에 커밋한다
+     (.github/workflows/games.yml → scripts/fetch-games.mjs).
+     설정할 것이 없다. 여기는 비워 두면 된다.
 
-     gamesProxyUrl에 주소를 넣으면 그쪽을 먼저 본다. 날씨와 같은 구조로,
-     Cloudflare Worker 같은 것을 세워 KBO 일정을 중계하면 여기만 채우면 된다.
-     응답은 data/games.json과 같은 모양이어야 한다({ games: [...] }). */
+     분 단위의 실시간이 필요해지면 worker/ 의 중계기를 Cloudflare에 배포하고
+     그 주소를 gamesProxyUrl에 넣는다. 그러면 그쪽을 먼저 보고, 실패하면 조용히
+     data/games.json으로 내려간다. 응답 모양은 { games: [...] }로 같아야 한다.
+
+     일정이 아예 없을 때는 "정보 없음"으로 끝내지 않고 공식 일정과 예매처로
+     한 번에 보낸다. */
   officialStatusUrl: 'https://www.koreabaseball.com/Schedule/Schedule.aspx',
   ticketUrl: 'https://tigers.co.kr/ticket/reservation',
   gamesProxyUrl: '',
